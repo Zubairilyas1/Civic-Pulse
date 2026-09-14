@@ -21,3 +21,4 @@ build/
 *.swo
 *~
 .DS_Store
+*.pdf
