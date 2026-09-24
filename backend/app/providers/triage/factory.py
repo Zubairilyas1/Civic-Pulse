@@ -1,6 +1,7 @@
 from typing import Optional
 from app.config import settings
 from app.providers.triage.base import BaseTriageProvider
+from app.providers.triage.llm import LLMTriage
 from app.providers.triage.rules import RuleBasedTriage
 from app.providers.triage.simulated import SimulatedTriage
 
@@ -12,9 +13,11 @@ class TriageFactory:
     def get_provider(provider_name: Optional[str] = None) -> BaseTriageProvider:
         name = (provider_name or settings.TRIAGE_PROVIDER or "simulated").lower()
 
-        if name == "rules" or name == "rule_based":
+        if name in ["groq", "llm"]:
+            return LLMTriage()
+        elif name in ["rules", "rule_based"]:
             return RuleBasedTriage()
         elif name == "simulated":
             return SimulatedTriage()
-        # Fallback to RuleBasedTriage if unspecified or unknown
+        # Fallback to RuleBasedTriage if unknown
         return RuleBasedTriage()
