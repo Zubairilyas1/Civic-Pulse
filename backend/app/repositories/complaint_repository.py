@@ -12,6 +12,7 @@ from app.schemas.complaint import (
     ComplaintResponse,
     PriorityEnum,
     StatusEnum,
+    TriageResult,
 )
 from app.schemas.stats import StatsResponse
 
@@ -23,10 +24,19 @@ class ComplaintRepository:
     """Repository layer managing SQL database access and in-memory fallback for complaints."""
 
     async def create(
-        self, complaint: ComplaintCreate, session: Optional[AsyncSession] = None
+        self,
+        complaint: ComplaintCreate,
+        triage_result: Optional[TriageResult] = None,
+        session: Optional[AsyncSession] = None,
     ) -> ComplaintResponse:
         complaint_id = str(uuid.uuid4())
         now = datetime.now()
+
+        status = StatusEnum.TRIAGED if triage_result else StatusEnum.SUBMITTED
+        category = triage_result.category if triage_result else None
+        priority = triage_result.priority if triage_result else None
+        summary = triage_result.summary if triage_result else None
+        triaged_by = triage_result.triaged_by if triage_result else None
 
         if session:
             db_item = Complaint(
@@ -34,7 +44,11 @@ class ComplaintRepository:
                 title=complaint.title,
                 description=complaint.description,
                 location=complaint.location,
-                status=StatusEnum.SUBMITTED,
+                status=status,
+                category=category,
+                priority=priority,
+                summary=summary,
+                triaged_by=triaged_by,
                 created_at=now,
                 updated_at=now,
             )
@@ -49,11 +63,11 @@ class ComplaintRepository:
             title=complaint.title,
             description=complaint.description,
             location=complaint.location,
-            status=StatusEnum.SUBMITTED,
-            category=None,
-            priority=None,
-            summary=None,
-            triaged_by=None,
+            status=status,
+            category=category,
+            priority=priority,
+            summary=summary,
+            triaged_by=triaged_by,
             created_at=now,
             updated_at=now,
         )
@@ -102,24 +116,19 @@ class ComplaintRepository:
     async def get_stats(
         self, session: Optional[AsyncSession] = None
     ) -> StatsResponse:
-        """Calculate aggregated counts grouped by status, category, and priority."""
         if session:
-            # Count total
             total_stmt = select(func.count(Complaint.id))
             total_res = await session.execute(total_stmt)
             total = total_res.scalar_one() or 0
 
-            # Count by status
             status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status)
             status_res = await session.execute(status_stmt)
             by_status = {s.value: count for s, count in status_res.all()}
 
-            # Count by category
             cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category)
             cat_res = await session.execute(cat_stmt)
             by_category = {c.value if c else "UNASSIGNED": count for c, count in cat_res.all()}
 
-            # Count by priority
             pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(Complaint.priority)
             pri_res = await session.execute(pri_stmt)
             by_priority = {p.value if p else "UNASSIGNED": count for p, count in pri_res.all()}
@@ -131,7 +140,6 @@ class ComplaintRepository:
                 by_priority=by_priority,
             )
 
-        # In-memory aggregation fallback
         items = list(_in_memory_db.values())
         by_status: Dict[str, int] = {}
         by_category: Dict[str, int] = {}
@@ -177,7 +185,6 @@ class ComplaintRepository:
             items = result.scalars().all()
             return [ComplaintResponse.model_validate(item) for item in items]
 
-        # In-memory fallback filtering
         items = list(_in_memory_db.values())
         if category:
             items = [i for i in items if i.category == category]
