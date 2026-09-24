@@ -1,8 +1,8 @@
 import logging
 import time
-from typing import Dict, Optional, Tuple
 
 import redis.asyncio as aioredis
+
 from app.config import settings
 
 logger = logging.getLogger("civicpulse.redis")
@@ -11,16 +11,14 @@ logger = logging.getLogger("civicpulse.redis")
 class RedisService:
     """Async Redis Service with in-memory fallback for testing and offline environments."""
 
-    _redis_client: Optional[aioredis.Redis] = None
-    _memory_cache: Dict[str, Tuple[str, float]] = {}
+    _redis_client: aioredis.Redis | None = None
+    _memory_cache: dict[str, tuple[str, float]] = {}
 
     @classmethod
-    async def get_client(cls) -> Optional[aioredis.Redis]:
+    async def get_client(cls) -> aioredis.Redis | None:
         if cls._redis_client is None:
             try:
-                client = aioredis.from_url(
-                    settings.REDIS_URL, decode_responses=True, socket_timeout=2.0
-                )
+                client = aioredis.from_url(settings.REDIS_URL, decode_responses=True, socket_timeout=2.0)
                 await client.ping()
                 cls._redis_client = client
                 logger.info("Connected to Redis successfully.")
@@ -30,7 +28,7 @@ class RedisService:
         return cls._redis_client
 
     @classmethod
-    async def get(cls, key: str) -> Optional[str]:
+    async def get(cls, key: str) -> str | None:
         client = await cls.get_client()
         if client:
             try:
@@ -47,7 +45,7 @@ class RedisService:
         return None
 
     @classmethod
-    async def set(cls, key: str, value: str, ex: Optional[int] = None) -> None:
+    async def set(cls, key: str, value: str, ex: int | None = None) -> None:
         client = await cls.get_client()
         if client:
             try:

@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 import httpx
 
@@ -15,7 +14,7 @@ logger = logging.getLogger("civicpulse.ollama_triage")
 class OllamaTriage(BaseTriageProvider):
     """Local Ollama LLM Triage provider with latency metrics and fallback."""
 
-    def __init__(self, fallback_provider: Optional[BaseTriageProvider] = None):
+    def __init__(self, fallback_provider: BaseTriageProvider | None = None):
         self.fallback_provider = fallback_provider or RuleBasedTriage()
         self.ollama_url = f"{settings.OLLAMA_HOST.rstrip('/')}/api/generate"
 
@@ -44,6 +43,7 @@ class OllamaTriage(BaseTriageProvider):
                 data = response.json()
                 response_text = data.get("response", "{}")
                 import json
+
                 content = json.loads(response_text)
 
                 category = CategoryEnum(content.get("category", "OTHER").upper())

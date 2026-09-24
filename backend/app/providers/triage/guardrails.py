@@ -26,8 +26,6 @@ class PromptGuardrail:
         for pattern in cls._INJECTION_PATTERNS:
             if re.search(pattern, clean_text, re.IGNORECASE):
                 is_detected = True
-                clean_text = re.sub(
-                    pattern, "[REDACTED_INJECTION]", clean_text, flags=re.IGNORECASE
-                )
+                clean_text = re.sub(pattern, "[REDACTED_INJECTION]", clean_text, flags=re.IGNORECASE)
 
         return clean_text, is_detected

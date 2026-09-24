@@ -43,12 +43,8 @@ def test_rule_based_triage_electricity_category():
 
 def test_simulated_triage_deterministic():
     provider = SimulatedTriage()
-    res1 = asyncio.run(
-        provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
-    )
-    res2 = asyncio.run(
-        provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
-    )
+    res1 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
+    res2 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
 
     assert res1.category == res2.category
     assert res1.priority == res2.priority

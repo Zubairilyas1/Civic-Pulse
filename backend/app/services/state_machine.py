@@ -24,9 +24,7 @@ class ComplaintStateMachine:
     }
 
     @classmethod
-    def validate_transition(
-        cls, current_status: StatusEnum, target_status: StatusEnum
-    ) -> None:
+    def validate_transition(cls, current_status: StatusEnum, target_status: StatusEnum) -> None:
         """Validate if transition from current_status to target_status is allowed.
 
         Raises InvalidStateTransitionException if transition is forbidden.

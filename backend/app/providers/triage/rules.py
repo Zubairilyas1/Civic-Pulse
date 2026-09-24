@@ -96,11 +96,7 @@ class RuleBasedTriage(BaseTriageProvider):
         scores: dict[CategoryEnum, int] = {}
 
         for category, keywords in self._CATEGORY_KEYWORDS.items():
-            score = sum(
-                1
-                for kw in keywords
-                if re.search(r"\b" + re.escape(kw) + r"\b", text_lower)
-            )
+            score = sum(1 for kw in keywords if re.search(r"\b" + re.escape(kw) + r"\b", text_lower))
             if score > 0:
                 scores[category] = score
 

@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Tuple
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -14,12 +14,10 @@ class StatsService:
     STATS_CACHE_KEY = "civicpulse:cache:stats"
     CACHE_TTL = 30  # 30 seconds TTL
 
-    def __init__(self, repository: Optional[ComplaintRepository] = None):
+    def __init__(self, repository: ComplaintRepository | None = None):
         self.repository = repository or ComplaintRepository()
 
-    async def get_stats_with_cache_status(
-        self, session: Optional[AsyncSession] = None
-    ) -> Tuple[StatsResponse, str]:
+    async def get_stats_with_cache_status(self, session: AsyncSession | None = None) -> tuple[StatsResponse, str]:
         """Fetch stats with Redis caching. Returns (StatsResponse, cache_status) where cache_status is 'HIT' or 'MISS'."""
         cached_json = await RedisService.get(self.STATS_CACHE_KEY)
         if cached_json:
@@ -28,9 +26,7 @@ class StatsService:
 
         # Cache MISS: fetch fresh from database
         stats = await self.repository.get_stats(session=session)
-        await RedisService.set(
-            self.STATS_CACHE_KEY, stats.model_dump_json(), ex=self.CACHE_TTL
-        )
+        await RedisService.set(self.STATS_CACHE_KEY, stats.model_dump_json(), ex=self.CACHE_TTL)
         return stats, "MISS"
 
     async def invalidate_stats_cache(self) -> None:

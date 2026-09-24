@@ -1,5 +1,6 @@
 import time
-from typing import Callable, Dict, List
+from typing import Callable
+
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -9,7 +10,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
     """Fixed-window IP-keyed rate limiter middleware defending endpoints from abuse."""
 
     # In-memory sliding window map: IP -> List[timestamps]
-    _requests: Dict[str, List[float]] = {}
+    _requests: dict[str, list[float]] = {}
     _MAX_REQUESTS = 60  # 60 requests per minute
     _WINDOW_SECONDS = 60.0
 

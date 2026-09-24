@@ -23,7 +23,9 @@ class SimulatedTriage(BaseTriageProvider):
         category = self._CATEGORIES[text_hash % len(self._CATEGORIES)]
         priority = self._PRIORITIES[(text_hash >> 2) % len(self._PRIORITIES)]
 
-        summary = f"Simulated triage assigned category '{category.value}' and priority '{priority.value}' based on hash seed."
+        summary = (
+            f"Simulated triage assigned category '{category.value}' and priority '{priority.value}' based on hash seed."
+        )
 
         return TriageResult(
             category=category,

@@ -63,18 +63,10 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_complaints_category"), "complaints", ["category"], unique=False
-    )
-    op.create_index(
-        op.f("ix_complaints_created_at"), "complaints", ["created_at"], unique=False
-    )
-    op.create_index(
-        op.f("ix_complaints_priority"), "complaints", ["priority"], unique=False
-    )
-    op.create_index(
-        op.f("ix_complaints_status"), "complaints", ["status"], unique=False
-    )
+    op.create_index(op.f("ix_complaints_category"), "complaints", ["category"], unique=False)
+    op.create_index(op.f("ix_complaints_created_at"), "complaints", ["created_at"], unique=False)
+    op.create_index(op.f("ix_complaints_priority"), "complaints", ["priority"], unique=False)
+    op.create_index(op.f("ix_complaints_status"), "complaints", ["status"], unique=False)
     op.create_index(op.f("ix_complaints_title"), "complaints", ["title"], unique=False)
 
 
