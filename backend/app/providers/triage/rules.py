@@ -7,7 +7,6 @@ from app.schemas.complaint import CategoryEnum, PriorityEnum, TriageResult
 class RuleBasedTriage(BaseTriageProvider):
     """Keyword and pattern-matching rule engine for civic complaint triage."""
 
-    # Keyword mapping dictionary for categories
     _CATEGORY_KEYWORDS = {
         CategoryEnum.WATER: [
             "water",
@@ -69,7 +68,6 @@ class RuleBasedTriage(BaseTriageProvider):
         ],
     }
 
-    # Priority trigger words
     _CRITICAL_WORDS = [
         "danger",
         "hazard",
@@ -95,7 +93,7 @@ class RuleBasedTriage(BaseTriageProvider):
 
     def _determine_category(self, text: str) -> CategoryEnum:
         text_lower = text.lower()
-        scores = {}
+        scores: dict[CategoryEnum, int] = {}
 
         for category, keywords in self._CATEGORY_KEYWORDS.items():
             score = sum(
@@ -109,8 +107,7 @@ class RuleBasedTriage(BaseTriageProvider):
         if not scores:
             return CategoryEnum.OTHER
 
-        # Return category with highest keyword match count
-        return max(scores, key=scores.get)
+        return max(scores, key=lambda k: scores[k])
 
     def _determine_priority(self, text: str) -> PriorityEnum:
         text_lower = text.lower()

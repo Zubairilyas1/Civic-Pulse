@@ -112,7 +112,9 @@ class ComplaintRepository:
             return updated_item
         return None
 
-    async def get_stats(self, session: AsyncSession | None = None) -> StatsResponse:
+    async def get_stats(
+        self, session: AsyncSession | None = None
+    ) -> StatsResponse:
         if session:
             total_stmt = select(func.count(Complaint.id))
             total_res = await session.execute(total_stmt)
@@ -148,25 +150,25 @@ class ComplaintRepository:
             )
 
         items = list(_in_memory_db.values())
-        by_status: dict[str, int] = {}
-        by_category: dict[str, int] = {}
-        by_priority: dict[str, int] = {}
+        mem_status: dict[str, int] = {}
+        mem_category: dict[str, int] = {}
+        mem_priority: dict[str, int] = {}
 
         for item in items:
             s = item.status.value
-            by_status[s] = by_status.get(s, 0) + 1
+            mem_status[s] = mem_status.get(s, 0) + 1
 
             c = item.category.value if item.category else "UNASSIGNED"
-            by_category[c] = by_category.get(c, 0) + 1
+            mem_category[c] = mem_category.get(c, 0) + 1
 
             p = item.priority.value if item.priority else "UNASSIGNED"
-            by_priority[p] = by_priority.get(p, 0) + 1
+            mem_priority[p] = mem_priority.get(p, 0) + 1
 
         return StatsResponse(
             total_complaints=len(items),
-            by_status=by_status,
-            by_category=by_category,
-            by_priority=by_priority,
+            by_status=mem_status,
+            by_category=mem_category,
+            by_priority=mem_priority,
         )
 
     async def list_all(
@@ -191,15 +193,15 @@ class ComplaintRepository:
                 query.offset(skip).limit(limit).order_by(Complaint.created_at.desc())
             )
             result = await session.execute(query)
-            items = result.scalars().all()
-            return [ComplaintResponse.model_validate(item) for item in items]
+            db_items = result.scalars().all()
+            return [ComplaintResponse.model_validate(item) for item in db_items]
 
-        items = list(_in_memory_db.values())
+        mem_items = list(_in_memory_db.values())
         if category:
-            items = [i for i in items if i.category == category]
+            mem_items = [i for i in mem_items if i.category == category]
         if priority:
-            items = [i for i in items if i.priority == priority]
+            mem_items = [i for i in mem_items if i.priority == priority]
         if status:
-            items = [i for i in items if i.status == status]
+            mem_items = [i for i in mem_items if i.status == status]
 
-        return items[skip : skip + limit]
+        return mem_items[skip : skip + limit]
