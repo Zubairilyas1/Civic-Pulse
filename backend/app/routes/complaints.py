@@ -1,4 +1,3 @@
-from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.schemas.complaint import (
@@ -22,11 +21,11 @@ async def create_complaint(complaint: ComplaintCreate):
     return await complaint_service.create_complaint(complaint)
 
 
-@router.get("", response_model=List[ComplaintResponse])
+@router.get("", response_model=list[ComplaintResponse])
 async def list_complaints(
-    category: Optional[CategoryEnum] = None,
-    priority: Optional[PriorityEnum] = None,
-    status: Optional[StatusEnum] = None,
+    category: CategoryEnum | None = None,
+    priority: PriorityEnum | None = None,
+    status: StatusEnum | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
 ):
@@ -55,7 +54,7 @@ async def get_complaint(complaint_id: str):
 @router.patch("/{complaint_id}/status", response_model=ComplaintResponse)
 async def update_complaint_status(complaint_id: str, payload: StatusUpdate):
     """Update complaint status with strict state machine validation.
-    
+
     Raises 409 Conflict on invalid status transition.
     Raises 404 Not Found if complaint does not exist.
     """

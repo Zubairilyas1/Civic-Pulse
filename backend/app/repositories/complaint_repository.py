@@ -1,9 +1,8 @@
-from typing import Dict, List, Optional
-from datetime import datetime
 import uuid
+from datetime import datetime
 
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
 
 from app.models.complaint import Complaint
 from app.schemas.complaint import (
@@ -26,8 +25,8 @@ class ComplaintRepository:
     async def create(
         self,
         complaint: ComplaintCreate,
-        triage_result: Optional[TriageResult] = None,
-        session: Optional[AsyncSession] = None,
+        triage_result: TriageResult | None = None,
+        session: AsyncSession | None = None,
     ) -> ComplaintResponse:
         complaint_id = str(uuid.uuid4())
         now = datetime.now()
@@ -75,8 +74,8 @@ class ComplaintRepository:
         return res
 
     async def get_by_id(
-        self, complaint_id: str, session: Optional[AsyncSession] = None
-    ) -> Optional[ComplaintResponse]:
+        self, complaint_id: str, session: AsyncSession | None = None
+    ) -> ComplaintResponse | None:
         if session:
             stmt = select(Complaint).where(Complaint.id == complaint_id)
             result = await session.execute(stmt)
@@ -89,8 +88,8 @@ class ComplaintRepository:
         self,
         complaint_id: str,
         new_status: StatusEnum,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[ComplaintResponse]:
+        session: AsyncSession | None = None,
+    ) -> ComplaintResponse | None:
         now = datetime.now()
 
         if session:
@@ -113,25 +112,33 @@ class ComplaintRepository:
             return updated_item
         return None
 
-    async def get_stats(
-        self, session: Optional[AsyncSession] = None
-    ) -> StatsResponse:
+    async def get_stats(self, session: AsyncSession | None = None) -> StatsResponse:
         if session:
             total_stmt = select(func.count(Complaint.id))
             total_res = await session.execute(total_stmt)
             total = total_res.scalar_one() or 0
 
-            status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status)
+            status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(
+                Complaint.status
+            )
             status_res = await session.execute(status_stmt)
             by_status = {s.value: count for s, count in status_res.all()}
 
-            cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category)
+            cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(
+                Complaint.category
+            )
             cat_res = await session.execute(cat_stmt)
-            by_category = {c.value if c else "UNASSIGNED": count for c, count in cat_res.all()}
+            by_category = {
+                c.value if c else "UNASSIGNED": count for c, count in cat_res.all()
+            }
 
-            pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(Complaint.priority)
+            pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(
+                Complaint.priority
+            )
             pri_res = await session.execute(pri_stmt)
-            by_priority = {p.value if p else "UNASSIGNED": count for p, count in pri_res.all()}
+            by_priority = {
+                p.value if p else "UNASSIGNED": count for p, count in pri_res.all()
+            }
 
             return StatsResponse(
                 total_complaints=total,
@@ -141,9 +148,9 @@ class ComplaintRepository:
             )
 
         items = list(_in_memory_db.values())
-        by_status: Dict[str, int] = {}
-        by_category: Dict[str, int] = {}
-        by_priority: Dict[str, int] = {}
+        by_status: dict[str, int] = {}
+        by_category: dict[str, int] = {}
+        by_priority: dict[str, int] = {}
 
         for item in items:
             s = item.status.value
@@ -164,13 +171,13 @@ class ComplaintRepository:
 
     async def list_all(
         self,
-        category: Optional[CategoryEnum] = None,
-        priority: Optional[PriorityEnum] = None,
-        status: Optional[StatusEnum] = None,
+        category: CategoryEnum | None = None,
+        priority: PriorityEnum | None = None,
+        status: StatusEnum | None = None,
         skip: int = 0,
         limit: int = 10,
-        session: Optional[AsyncSession] = None,
-    ) -> List[ComplaintResponse]:
+        session: AsyncSession | None = None,
+    ) -> list[ComplaintResponse]:
         if session:
             query = select(Complaint)
             if category:
@@ -180,7 +187,9 @@ class ComplaintRepository:
             if status:
                 query = query.where(Complaint.status == status)
 
-            query = query.offset(skip).limit(limit).order_by(Complaint.created_at.desc())
+            query = (
+                query.offset(skip).limit(limit).order_by(Complaint.created_at.desc())
+            )
             result = await session.execute(query)
             items = result.scalars().all()
             return [ComplaintResponse.model_validate(item) for item in items]

@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -48,7 +49,9 @@ def test_invalid_state_transition_returns_409():
     assert create_res.json()["status"] == "TRIAGED"
 
     # 2. Advance to RESOLVED then attempt invalid transition back to IN_PROGRESS (Forbidden from terminal state)
-    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
+    client.patch(
+        f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"}
+    )
     client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"})
 
     invalid_res = client.patch(

@@ -1,4 +1,3 @@
-from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -9,10 +8,10 @@ from app.schemas.stats import ProviderInfo, ProvidersMetaResponse, StatsResponse
 class StatsService:
     """Service layer handling statistics calculations and provider metadata."""
 
-    def __init__(self, repository: Optional[ComplaintRepository] = None):
+    def __init__(self, repository: ComplaintRepository | None = None):
         self.repository = repository or ComplaintRepository()
 
-    async def get_stats(self, session: Optional[AsyncSession] = None) -> StatsResponse:
+    async def get_stats(self, session: AsyncSession | None = None) -> StatsResponse:
         """Fetch aggregated complaint counts."""
         return await self.repository.get_stats(session=session)
 

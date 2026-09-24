@@ -1,4 +1,5 @@
 import hashlib
+
 from app.providers.triage.base import BaseTriageProvider
 from app.schemas.complaint import CategoryEnum, PriorityEnum, TriageResult
 
@@ -17,7 +18,7 @@ class SimulatedTriage(BaseTriageProvider):
             raise RuntimeError("SimulatedTriage configured failure triggered.")
 
         # Hash combined text to generate deterministic index
-        text_hash = int(hashlib.md5(f"{title}{description}".encode("utf-8")).hexdigest(), 16)
+        text_hash = int(hashlib.md5(f"{title}{description}".encode()).hexdigest(), 16)
 
         category = self._CATEGORIES[text_hash % len(self._CATEGORIES)]
         priority = self._PRIORITIES[(text_hash >> 2) % len(self._PRIORITIES)]

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.providers.triage.factory import TriageFactory
@@ -11,7 +11,9 @@ from app.schemas.complaint import (
     PriorityEnum,
     StatusEnum,
 )
-from app.services.state_machine import ComplaintStateMachine, InvalidStateTransitionException
+from app.services.state_machine import (
+    ComplaintStateMachine,
+)
 
 logger = logging.getLogger("civicpulse.complaint_service")
 
@@ -19,11 +21,11 @@ logger = logging.getLogger("civicpulse.complaint_service")
 class ComplaintService:
     """Service layer orchestrating complaint business logic, state machine, and AI triage."""
 
-    def __init__(self, repository: Optional[ComplaintRepository] = None):
+    def __init__(self, repository: ComplaintRepository | None = None):
         self.repository = repository or ComplaintRepository()
 
     async def create_complaint(
-        self, complaint: ComplaintCreate, session: Optional[AsyncSession] = None
+        self, complaint: ComplaintCreate, session: AsyncSession | None = None
     ) -> ComplaintResponse:
         """Create new complaint and automatically execute AI triage pipeline."""
         triage_result = None
@@ -43,15 +45,15 @@ class ComplaintService:
         )
 
     async def get_complaint(
-        self, complaint_id: str, session: Optional[AsyncSession] = None
-    ) -> Optional[ComplaintResponse]:
+        self, complaint_id: str, session: AsyncSession | None = None
+    ) -> ComplaintResponse | None:
         return await self.repository.get_by_id(complaint_id, session=session)
 
     async def update_status(
         self,
         complaint_id: str,
         target_status: StatusEnum,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ) -> ComplaintResponse:
         complaint = await self.get_complaint(complaint_id, session=session)
         if not complaint:
@@ -70,13 +72,13 @@ class ComplaintService:
 
     async def list_complaints(
         self,
-        category: Optional[CategoryEnum] = None,
-        priority: Optional[PriorityEnum] = None,
-        status: Optional[StatusEnum] = None,
+        category: CategoryEnum | None = None,
+        priority: PriorityEnum | None = None,
+        status: StatusEnum | None = None,
         skip: int = 0,
         limit: int = 10,
-        session: Optional[AsyncSession] = None,
-    ) -> List[ComplaintResponse]:
+        session: AsyncSession | None = None,
+    ) -> list[ComplaintResponse]:
         return await self.repository.list_all(
             category=category,
             priority=priority,

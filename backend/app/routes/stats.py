@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from app.schemas.stats import StatsResponse
 from app.services.stats_service import StatsService
 

@@ -1,5 +1,5 @@
 import re
-from typing import Tuple
+
 from app.providers.triage.base import BaseTriageProvider
 from app.schemas.complaint import CategoryEnum, PriorityEnum, TriageResult
 
@@ -10,25 +10,87 @@ class RuleBasedTriage(BaseTriageProvider):
     # Keyword mapping dictionary for categories
     _CATEGORY_KEYWORDS = {
         CategoryEnum.WATER: [
-            "water", "leak", "leaking", "pipe", "pipeline", "drain", "sewage", "drinking water", "tap", "overflow"
+            "water",
+            "leak",
+            "leaking",
+            "pipe",
+            "pipeline",
+            "drain",
+            "sewage",
+            "drinking water",
+            "tap",
+            "overflow",
         ],
         CategoryEnum.ROADS: [
-            "road", "pothole", "asphalt", "street", "traffic", "highway", "footpath", "sidewalk", "bridge", "lane"
+            "road",
+            "pothole",
+            "asphalt",
+            "street",
+            "traffic",
+            "highway",
+            "footpath",
+            "sidewalk",
+            "bridge",
+            "lane",
         ],
         CategoryEnum.ELECTRICITY: [
-            "power", "electricity", "wire", "cable", "transformer", "outage", "blackout", "pole", "light", "spark"
+            "power",
+            "electricity",
+            "wire",
+            "cable",
+            "transformer",
+            "outage",
+            "blackout",
+            "pole",
+            "light",
+            "spark",
         ],
         CategoryEnum.WASTE: [
-            "garbage", "trash", "waste", "dump", "bin", "litter", "rubbish", "cleaning", "heap"
+            "garbage",
+            "trash",
+            "waste",
+            "dump",
+            "bin",
+            "litter",
+            "rubbish",
+            "cleaning",
+            "heap",
         ],
         CategoryEnum.SANITATION: [
-            "sanitation", "sewer", "gutters", "stink", "smell", "filth", "hygiene", "mosquito", "contamination"
+            "sanitation",
+            "sewer",
+            "gutters",
+            "stink",
+            "smell",
+            "filth",
+            "hygiene",
+            "mosquito",
+            "contamination",
         ],
     }
 
     # Priority trigger words
-    _CRITICAL_WORDS = ["danger", "hazard", "fire", "spark", "explosion", "emergency", "collapse", "severe", "life"]
-    _HIGH_WORDS = ["urgent", "blocking", "heavy", "overflowing", "major", "broken", "blackout", "main street"]
+    _CRITICAL_WORDS = [
+        "danger",
+        "hazard",
+        "fire",
+        "spark",
+        "explosion",
+        "emergency",
+        "collapse",
+        "severe",
+        "life",
+    ]
+    _HIGH_WORDS = [
+        "urgent",
+        "blocking",
+        "heavy",
+        "overflowing",
+        "major",
+        "broken",
+        "blackout",
+        "main street",
+    ]
     _MEDIUM_WORDS = ["leaking", "pothole", "garbage", "smell", "delay", "issue"]
 
     def _determine_category(self, text: str) -> CategoryEnum:
@@ -36,7 +98,11 @@ class RuleBasedTriage(BaseTriageProvider):
         scores = {}
 
         for category, keywords in self._CATEGORY_KEYWORDS.items():
-            score = sum(1 for kw in keywords if re.search(r'\b' + re.escape(kw) + r'\b', text_lower))
+            score = sum(
+                1
+                for kw in keywords
+                if re.search(r"\b" + re.escape(kw) + r"\b", text_lower)
+            )
             if score > 0:
                 scores[category] = score
 

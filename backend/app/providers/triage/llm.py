@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import random
-from typing import Optional
 
 import httpx
 
@@ -22,7 +21,7 @@ class LLMTriage(BaseTriageProvider):
     GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
     MODEL = "llama3-70b-8192"
 
-    def __init__(self, fallback_provider: Optional[BaseTriageProvider] = None):
+    def __init__(self, fallback_provider: BaseTriageProvider | None = None):
         self.fallback_provider = fallback_provider or RuleBasedTriage()
 
     async def _call_groq_api(self, title: str, description: str) -> TriageResult:
@@ -59,13 +58,19 @@ class LLMTriage(BaseTriageProvider):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for attempt in range(2):
                 try:
-                    response = await client.post(self.GROQ_URL, headers=headers, json=payload)
+                    response = await client.post(
+                        self.GROQ_URL, headers=headers, json=payload
+                    )
                     if response.status_code == 200:
                         data = response.json()
                         content = json.loads(data["choices"][0]["message"]["content"])
 
-                        category = CategoryEnum(content.get("category", "OTHER").upper())
-                        priority = PriorityEnum(content.get("priority", "MEDIUM").upper())
+                        category = CategoryEnum(
+                            content.get("category", "OTHER").upper()
+                        )
+                        priority = PriorityEnum(
+                            content.get("priority", "MEDIUM").upper()
+                        )
                         summary = content.get("summary", "LLM triage complete.")
 
                         return TriageResult(
@@ -76,7 +81,9 @@ class LLMTriage(BaseTriageProvider):
                             confidence_score=0.95,
                         )
 
-                    logger.warning(f"Groq API returned HTTP status {response.status_code}")
+                    logger.warning(
+                        f"Groq API returned HTTP status {response.status_code}"
+                    )
 
                 except (httpx.TimeoutException, httpx.RequestError) as exc:
                     logger.warning(f"Groq API attempt {attempt + 1} failed: {str(exc)}")
@@ -109,5 +116,7 @@ class LLMTriage(BaseTriageProvider):
             return result
         except Exception as exc:
             logger.warning(f"LLMTriage falling back to RuleBasedTriage: {str(exc)}")
-            fallback_result = await self.fallback_provider.triage(clean_title, clean_desc)
+            fallback_result = await self.fallback_provider.triage(
+                clean_title, clean_desc
+            )
             return fallback_result

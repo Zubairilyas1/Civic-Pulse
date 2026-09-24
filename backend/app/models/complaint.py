@@ -1,10 +1,12 @@
-from datetime import datetime
 import uuid
-from sqlalchemy import String, Text, DateTime, Enum as SQLEnum, Float
+from datetime import datetime
+
+from sqlalchemy import DateTime, Float, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.schemas.complaint import PriorityEnum, CategoryEnum, StatusEnum
+from app.schemas.complaint import CategoryEnum, PriorityEnum, StatusEnum
 
 
 class Complaint(Base):

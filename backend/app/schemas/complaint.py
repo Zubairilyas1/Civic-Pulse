@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -29,9 +29,18 @@ class StatusEnum(str, Enum):
 
 
 class ComplaintBase(BaseModel):
-    title: str = Field(..., min_length=5, max_length=150, description="Title of the complaint")
-    description: str = Field(..., min_length=10, max_length=2000, description="Detailed description")
-    location: str = Field(..., min_length=3, max_length=200, description="Physical location or neighborhood")
+    title: str = Field(
+        ..., min_length=5, max_length=150, description="Title of the complaint"
+    )
+    description: str = Field(
+        ..., min_length=10, max_length=2000, description="Detailed description"
+    )
+    location: str = Field(
+        ...,
+        min_length=3,
+        max_length=200,
+        description="Physical location or neighborhood",
+    )
 
 
 class ComplaintCreate(ComplaintBase):
@@ -40,7 +49,7 @@ class ComplaintCreate(ComplaintBase):
 
 class StatusUpdate(BaseModel):
     status: StatusEnum
-    notes: Optional[str] = Field(None, max_length=500)
+    notes: str | None = Field(None, max_length=500)
 
 
 class TriageResult(BaseModel):
@@ -54,10 +63,10 @@ class TriageResult(BaseModel):
 class ComplaintResponse(ComplaintBase):
     id: str
     status: StatusEnum
-    category: Optional[CategoryEnum] = None
-    priority: Optional[PriorityEnum] = None
-    summary: Optional[str] = None
-    triaged_by: Optional[str] = None
+    category: CategoryEnum | None = None
+    priority: PriorityEnum | None = None
+    summary: str | None = None
+    triaged_by: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -1,5 +1,4 @@
 import re
-from typing import Tuple
 
 
 class PromptGuardrail:
@@ -16,9 +15,9 @@ class PromptGuardrail:
     ]
 
     @classmethod
-    def sanitize(cls, text: str) -> Tuple[str, bool]:
+    def sanitize(cls, text: str) -> tuple[str, bool]:
         """Sanitize text and detect prompt injection attempts.
-        
+
         Returns (clean_text, is_injection_detected).
         """
         is_detected = False
@@ -27,6 +26,8 @@ class PromptGuardrail:
         for pattern in cls._INJECTION_PATTERNS:
             if re.search(pattern, clean_text, re.IGNORECASE):
                 is_detected = True
-                clean_text = re.sub(pattern, "[REDACTED_INJECTION]", clean_text, flags=re.IGNORECASE)
+                clean_text = re.sub(
+                    pattern, "[REDACTED_INJECTION]", clean_text, flags=re.IGNORECASE
+                )
 
         return clean_text, is_detected

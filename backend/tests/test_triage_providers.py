@@ -1,4 +1,5 @@
 import asyncio
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -19,7 +20,11 @@ def test_rule_based_triage_water_category():
         )
     )
     assert result.category == CategoryEnum.WATER
-    assert result.priority in [PriorityEnum.HIGH, PriorityEnum.CRITICAL, PriorityEnum.MEDIUM]
+    assert result.priority in [
+        PriorityEnum.HIGH,
+        PriorityEnum.CRITICAL,
+        PriorityEnum.MEDIUM,
+    ]
     assert result.triaged_by == "rule_based_v1"
 
 
@@ -38,8 +43,12 @@ def test_rule_based_triage_electricity_category():
 
 def test_simulated_triage_deterministic():
     provider = SimulatedTriage()
-    res1 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
-    res2 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
+    res1 = asyncio.run(
+        provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
+    )
+    res2 = asyncio.run(
+        provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
+    )
 
     assert res1.category == res2.category
     assert res1.priority == res2.priority
@@ -65,7 +74,14 @@ def test_complaint_creation_auto_triages():
 
     data = response.json()
     assert data["status"] == "TRIAGED"
-    assert data["category"] in ["SANITATION", "WATER", "WASTE", "ROADS", "ELECTRICITY", "OTHER"]
+    assert data["category"] in [
+        "SANITATION",
+        "WATER",
+        "WASTE",
+        "ROADS",
+        "ELECTRICITY",
+        "OTHER",
+    ]
     assert data["priority"] is not None
     assert data["summary"] is not None
     assert data["triaged_by"] is not None
