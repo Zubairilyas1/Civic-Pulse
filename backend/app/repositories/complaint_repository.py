@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 import uuid
 
@@ -13,6 +13,7 @@ from app.schemas.complaint import (
     PriorityEnum,
     StatusEnum,
 )
+from app.schemas.stats import StatsResponse
 
 # In-memory storage fallback when DB session is not active
 _in_memory_db: dict[str, ComplaintResponse] = {}
@@ -25,7 +26,7 @@ class ComplaintRepository:
         self, complaint: ComplaintCreate, session: Optional[AsyncSession] = None
     ) -> ComplaintResponse:
         complaint_id = str(uuid.uuid4())
-        now = datetime.utcnow()
+        now = datetime.now()
 
         if session:
             db_item = Complaint(
@@ -76,7 +77,7 @@ class ComplaintRepository:
         new_status: StatusEnum,
         session: Optional[AsyncSession] = None,
     ) -> Optional[ComplaintResponse]:
-        now = datetime.utcnow()
+        now = datetime.now()
 
         if session:
             stmt = (
@@ -97,6 +98,61 @@ class ComplaintRepository:
             _in_memory_db[complaint_id] = updated_item
             return updated_item
         return None
+
+    async def get_stats(
+        self, session: Optional[AsyncSession] = None
+    ) -> StatsResponse:
+        """Calculate aggregated counts grouped by status, category, and priority."""
+        if session:
+            # Count total
+            total_stmt = select(func.count(Complaint.id))
+            total_res = await session.execute(total_stmt)
+            total = total_res.scalar_one() or 0
+
+            # Count by status
+            status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status)
+            status_res = await session.execute(status_stmt)
+            by_status = {s.value: count for s, count in status_res.all()}
+
+            # Count by category
+            cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category)
+            cat_res = await session.execute(cat_stmt)
+            by_category = {c.value if c else "UNASSIGNED": count for c, count in cat_res.all()}
+
+            # Count by priority
+            pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(Complaint.priority)
+            pri_res = await session.execute(pri_stmt)
+            by_priority = {p.value if p else "UNASSIGNED": count for p, count in pri_res.all()}
+
+            return StatsResponse(
+                total_complaints=total,
+                by_status=by_status,
+                by_category=by_category,
+                by_priority=by_priority,
+            )
+
+        # In-memory aggregation fallback
+        items = list(_in_memory_db.values())
+        by_status: Dict[str, int] = {}
+        by_category: Dict[str, int] = {}
+        by_priority: Dict[str, int] = {}
+
+        for item in items:
+            s = item.status.value
+            by_status[s] = by_status.get(s, 0) + 1
+
+            c = item.category.value if item.category else "UNASSIGNED"
+            by_category[c] = by_category.get(c, 0) + 1
+
+            p = item.priority.value if item.priority else "UNASSIGNED"
+            by_priority[p] = by_priority.get(p, 0) + 1
+
+        return StatsResponse(
+            total_complaints=len(items),
+            by_status=by_status,
+            by_category=by_category,
+            by_priority=by_priority,
+        )
 
     async def list_all(
         self,
