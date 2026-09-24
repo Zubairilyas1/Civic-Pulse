@@ -1,0 +1,96 @@
+services:
+  # Database Service (PostgreSQL 15)
+  db:
+    image: postgres:15-alpine
+    container_name: civicpulse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: civicpulse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d civicpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Cache Service (Redis 7)
+  redis:
+    image: redis:7-alpine
+    container_name: civicpulse-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: civicpulse-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - internal
+
+  # Backend API Service (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civicpulse-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/civicpulse
+      REDIS_URL: redis://redis:6379/0
+      TRIAGE_PROVIDER: simulated
+      OLLAMA_HOST: http://ollama:11434
+    ports:
+      - "8000:8000"
+    networks:
+      - edge
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Frontend Web Service (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: civicpulse-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - edge
+    depends_on:
+      - backend
+
+# 2 Isolated Networks: edge (frontend-backend bridge) & internal (isolated DB/Redis/Ollama)
+networks:
+  edge:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true
+
+# 3 Persistent Named Volumes
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
