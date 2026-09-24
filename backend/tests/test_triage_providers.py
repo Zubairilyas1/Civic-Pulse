@@ -1,4 +1,4 @@
-import pytest
+import asyncio
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -10,35 +10,36 @@ from app.schemas.complaint import CategoryEnum, PriorityEnum
 client = TestClient(app)
 
 
-@pytest.mark.asyncio
-async def test_rule_based_triage_water_category():
+def test_rule_based_triage_water_category():
     provider = RuleBasedTriage()
-    result = await provider.triage(
-        title="Major Water Pipeline Leak",
-        description="Clean drinking water is leaking from a main pipe on Street 5.",
+    result = asyncio.run(
+        provider.triage(
+            title="Major Water Pipeline Leak",
+            description="Clean drinking water is leaking from a main pipe on Street 5.",
+        )
     )
     assert result.category == CategoryEnum.WATER
     assert result.priority in [PriorityEnum.HIGH, PriorityEnum.CRITICAL, PriorityEnum.MEDIUM]
     assert result.triaged_by == "rule_based_v1"
 
 
-@pytest.mark.asyncio
-async def test_rule_based_triage_electricity_category():
+def test_rule_based_triage_electricity_category():
     provider = RuleBasedTriage()
-    result = await provider.triage(
-        title="Transformer Sparking Hazard",
-        description="Electric pole transformer is producing dangerous sparks and fire hazard.",
+    result = asyncio.run(
+        provider.triage(
+            title="Transformer Sparking Hazard",
+            description="Electric pole transformer is producing dangerous sparks and fire hazard.",
+        )
     )
     assert result.category == CategoryEnum.ELECTRICITY
     assert result.priority == PriorityEnum.CRITICAL
     assert result.triaged_by == "rule_based_v1"
 
 
-@pytest.mark.asyncio
-async def test_simulated_triage_deterministic():
+def test_simulated_triage_deterministic():
     provider = SimulatedTriage()
-    res1 = await provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
-    res2 = await provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole")
+    res1 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
+    res2 = asyncio.run(provider.triage(title="Pothole in Sector F-7", description="Dangerous pothole"))
 
     assert res1.category == res2.category
     assert res1.priority == res2.priority

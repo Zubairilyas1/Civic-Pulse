@@ -14,7 +14,7 @@ def test_create_and_get_complaint():
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == payload["title"]
-    assert data["status"] == "SUBMITTED"
+    assert data["status"] == "TRIAGED"
     assert "id" in data
 
     complaint_id = data["id"]
