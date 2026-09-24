@@ -73,9 +73,7 @@ class ComplaintRepository:
         _in_memory_db[complaint_id] = res
         return res
 
-    async def get_by_id(
-        self, complaint_id: str, session: AsyncSession | None = None
-    ) -> ComplaintResponse | None:
+    async def get_by_id(self, complaint_id: str, session: AsyncSession | None = None) -> ComplaintResponse | None:
         if session:
             stmt = select(Complaint).where(Complaint.id == complaint_id)
             result = await session.execute(stmt)
@@ -105,42 +103,28 @@ class ComplaintRepository:
 
         if complaint_id in _in_memory_db:
             item = _in_memory_db[complaint_id]
-            updated_item = item.model_copy(
-                update={"status": new_status, "updated_at": now}
-            )
+            updated_item = item.model_copy(update={"status": new_status, "updated_at": now})
             _in_memory_db[complaint_id] = updated_item
             return updated_item
         return None
 
-    async def get_stats(
-        self, session: AsyncSession | None = None
-    ) -> StatsResponse:
+    async def get_stats(self, session: AsyncSession | None = None) -> StatsResponse:
         if session:
             total_stmt = select(func.count(Complaint.id))
             total_res = await session.execute(total_stmt)
             total = total_res.scalar_one() or 0
 
-            status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(
-                Complaint.status
-            )
+            status_stmt = select(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status)
             status_res = await session.execute(status_stmt)
             by_status = {s.value: count for s, count in status_res.all()}
 
-            cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(
-                Complaint.category
-            )
+            cat_stmt = select(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category)
             cat_res = await session.execute(cat_stmt)
-            by_category = {
-                c.value if c else "UNASSIGNED": count for c, count in cat_res.all()
-            }
+            by_category = {c.value if c else "UNASSIGNED": count for c, count in cat_res.all()}
 
-            pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(
-                Complaint.priority
-            )
+            pri_stmt = select(Complaint.priority, func.count(Complaint.id)).group_by(Complaint.priority)
             pri_res = await session.execute(pri_stmt)
-            by_priority = {
-                p.value if p else "UNASSIGNED": count for p, count in pri_res.all()
-            }
+            by_priority = {p.value if p else "UNASSIGNED": count for p, count in pri_res.all()}
 
             return StatsResponse(
                 total_complaints=total,
@@ -189,9 +173,7 @@ class ComplaintRepository:
             if status:
                 query = query.where(Complaint.status == status)
 
-            query = (
-                query.offset(skip).limit(limit).order_by(Complaint.created_at.desc())
-            )
+            query = query.offset(skip).limit(limit).order_by(Complaint.created_at.desc())
             result = await session.execute(query)
             db_items = result.scalars().all()
             return [ComplaintResponse.model_validate(item) for item in db_items]

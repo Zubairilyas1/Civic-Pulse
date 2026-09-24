@@ -14,9 +14,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OLLAMA_HOST: str = "http://ollama:11434"
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 settings = Settings()

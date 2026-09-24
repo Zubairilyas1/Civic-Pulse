@@ -1,6 +1,7 @@
 from app.config import settings
 from app.providers.triage.base import BaseTriageProvider
 from app.providers.triage.llm import LLMTriage
+from app.providers.triage.ollama import OllamaTriage
 from app.providers.triage.rules import RuleBasedTriage
 from app.providers.triage.simulated import SimulatedTriage
 
@@ -14,6 +15,8 @@ class TriageFactory:
 
         if name in ["groq", "llm"]:
             return LLMTriage()
+        elif name == "ollama":
+            return OllamaTriage()
         elif name in ["rules", "rule_based"]:
             return RuleBasedTriage()
         elif name == "simulated":

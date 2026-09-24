@@ -59,9 +59,7 @@ async def update_complaint_status(complaint_id: str, payload: StatusUpdate):
     Raises 404 Not Found if complaint does not exist.
     """
     try:
-        return await complaint_service.update_status(
-            complaint_id=complaint_id, target_status=payload.status
-        )
+        return await complaint_service.update_status(complaint_id=complaint_id, target_status=payload.status)
     except InvalidStateTransitionException as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

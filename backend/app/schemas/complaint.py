@@ -29,12 +29,8 @@ class StatusEnum(str, Enum):
 
 
 class ComplaintBase(BaseModel):
-    title: str = Field(
-        ..., min_length=5, max_length=150, description="Title of the complaint"
-    )
-    description: str = Field(
-        ..., min_length=10, max_length=2000, description="Detailed description"
-    )
+    title: str = Field(..., min_length=5, max_length=150, description="Title of the complaint")
+    description: str = Field(..., min_length=10, max_length=2000, description="Detailed description")
     location: str = Field(
         ...,
         min_length=3,

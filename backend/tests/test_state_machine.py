@@ -20,16 +20,12 @@ def test_valid_state_transitions_lifecycle():
     assert create_res.json()["status"] == "TRIAGED"
 
     # 2. Advance to IN_PROGRESS (Valid from TRIAGED)
-    progress_res = client.patch(
-        f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"}
-    )
+    progress_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
     assert progress_res.status_code == 200
     assert progress_res.json()["status"] == "IN_PROGRESS"
 
     # 3. Advance to RESOLVED (Valid from IN_PROGRESS)
-    resolve_res = client.patch(
-        f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"}
-    )
+    resolve_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"})
     assert resolve_res.status_code == 200
     assert resolve_res.json()["status"] == "RESOLVED"
 
@@ -49,14 +45,10 @@ def test_invalid_state_transition_returns_409():
     assert create_res.json()["status"] == "TRIAGED"
 
     # 2. Advance to RESOLVED then attempt invalid transition back to IN_PROGRESS (Forbidden from terminal state)
-    client.patch(
-        f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"}
-    )
+    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
     client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"})
 
-    invalid_res = client.patch(
-        f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"}
-    )
+    invalid_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
     assert invalid_res.status_code == 409
     detail = invalid_res.json()["detail"]
     assert detail["error"] == "InvalidStatusTransition"

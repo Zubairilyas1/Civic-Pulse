@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.rate_limiter import RateLimiterMiddleware
 from app.routes import complaints, health, meta, stats
 
 logger = logging.getLogger("civicpulse.main")
@@ -13,11 +14,8 @@ logger = logging.getLogger("civicpulse.main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager handling application startup and graceful shutdown."""
     logger.info("Initializing CivicPulse Backend Service...")
-    # Startup actions
     yield
-    # Shutdown actions
     logger.info("Executing graceful shutdown for CivicPulse Backend Service...")
 
 
@@ -30,7 +28,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add Middleware
+# Add Middleware (Rate Limiter + Request Logger)
+app.add_middleware(RateLimiterMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
