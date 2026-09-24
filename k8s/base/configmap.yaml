@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: civicpulse-config
+  namespace: civicpulse
+data:
+  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/civicpulse"
+  REDIS_URL: "redis://redis:6379/0"
+  TRIAGE_PROVIDER: "simulated"
+  OLLAMA_HOST: "http://ollama:11434"
+  VITE_API_BASE_URL: "/api"
