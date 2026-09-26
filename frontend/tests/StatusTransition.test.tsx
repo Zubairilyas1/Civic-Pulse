@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { civicPulseApi } from "../src/api/client";
+import { getNextStatus } from "../src/api/status";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { complaintFixture } from "./fixtures";
 
@@ -22,5 +23,10 @@ describe("Dashboard status transition", () => {
 
     expect(updateStatus).toHaveBeenCalledWith(complaintFixture.id, { status: "IN_PROGRESS" });
     expect(await screen.findByText("Status updated to IN PROGRESS.")).toBeInTheDocument();
+  });
+
+  it("does not advance terminal complaint states", () => {
+    expect(getNextStatus("RESOLVED")).toBeNull();
+    expect(getNextStatus("REJECTED")).toBeNull();
   });
 });

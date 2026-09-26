@@ -1,4 +1,5 @@
-import type { Complaint, ComplaintStatus } from "../api/types";
+import { getNextStatus } from "../api/status";
+import type { Complaint } from "../api/types";
 import { StatusBadge } from "./StatusBadge";
 
 function formatDate(value: string): string {
@@ -6,15 +7,6 @@ function formatDate(value: string): string {
   return Number.isNaN(date.getTime())
     ? "Unknown date"
     : new Intl.DateTimeFormat("en-PK", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
-
-export function getNextStatus(status: ComplaintStatus): ComplaintStatus | null {
-  const nextStatuses: Partial<Record<ComplaintStatus, ComplaintStatus>> = {
-    SUBMITTED: "TRIAGED",
-    TRIAGED: "IN_PROGRESS",
-    IN_PROGRESS: "RESOLVED",
-  };
-  return nextStatuses[status] || null;
 }
 
 interface DashboardTableProps {
@@ -93,7 +85,7 @@ function ComplaintRow({
             onClick={() => onAdvanceStatus(complaint)}
             type="button"
           >
-            {isUpdating ? "Updating…" : `Advance to ${nextStatus.replaceAll("_", " ")}`}
+            {isUpdating ? "Updating…" : `Advance to ${nextStatus.replace(/_/g, " ")}`}
           </button>
         ) : (
           <span className="text-xs text-slate-500">Terminal state</span>

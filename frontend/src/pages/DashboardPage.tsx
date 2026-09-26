@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { civicPulseApi } from "../api/client";
+import { getNextStatus } from "../api/status";
 import { CATEGORIES, PRIORITIES, STATUSES, type Category, type Complaint, type ComplaintStatus, type Priority } from "../api/types";
-import { DashboardTable, getNextStatus } from "../components/DashboardTable";
+import { DashboardTable } from "../components/DashboardTable";
 import { Alert, LoadingPanel } from "../components/Feedback";
 
 const PAGE_SIZE = 10;
@@ -82,7 +83,7 @@ export function DashboardPage() {
     try {
       const updatedComplaint = await civicPulseApi.updateComplaintStatus(pendingTransition.id, { status: nextStatus });
       setComplaints((current) => current.map((complaint) => complaint.id === updatedComplaint.id ? updatedComplaint : complaint));
-      setTransitionMessage(`Status updated to ${updatedComplaint.status.replaceAll("_", " ")}.`);
+      setTransitionMessage(`Status updated to ${updatedComplaint.status.replace(/_/g, " ")}.`);
       setPendingTransition(null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to update the complaint status.");
@@ -136,7 +137,7 @@ export function DashboardPage() {
             value={filters.status}
           >
             <option value="">All statuses</option>
-            {STATUSES.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
+            {STATUSES.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
           </select>
         </label>
         <div className="sm:col-span-3">
@@ -194,7 +195,7 @@ export function DashboardPage() {
             <p className="text-sm font-semibold text-amber-300">Confirm status update</p>
             <h2 className="mt-2 text-xl font-semibold" id="transition-title">Advance this complaint?</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              <span className="font-medium text-slate-100">{pendingTransition.title}</span> will move from {pendingTransition.status.replaceAll("_", " ")} to {getNextStatus(pendingTransition.status)?.replaceAll("_", " ")}.
+              <span className="font-medium text-slate-100">{pendingTransition.title}</span> will move from {pendingTransition.status.replace(/_/g, " ")} to {getNextStatus(pendingTransition.status)?.replace(/_/g, " ")}.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button

@@ -20,7 +20,7 @@ function Breakdown({ title, values }: { title: string; values: Record<string, nu
         <dl className="mt-4 space-y-3">
           {entries.map(([label, count]) => (
             <div className="flex items-center justify-between gap-4" key={label}>
-              <dt className="text-sm text-slate-400">{label.replaceAll("_", " ")}</dt>
+              <dt className="text-sm text-slate-400">{label.replace(/_/g, " ")}</dt>
               <dd className="text-sm font-semibold text-slate-100">{count}</dd>
             </div>
           ))}

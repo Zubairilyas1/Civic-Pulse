@@ -29,7 +29,7 @@ export function StatusBadge({ value }: { value: BadgeValue }) {
 
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${toneByValue[value]}`}>
-      {value.replaceAll("_", " ")}
+      {value.replace(/_/g, " ")}
     </span>
   );
 }
