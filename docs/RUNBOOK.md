@@ -99,7 +99,27 @@ kubectl rollout status deployment/frontend -n civicpulse
 
 Confirm health endpoints and a browser smoke test after rollback. Do not automatically downgrade database schema for an application-only rollback; forward-compatible migrations are required.
 
-## 7. Escalation Checklist
+The frontend deployment has a readiness probe on `/` and uses a rolling-update policy of `maxUnavailable: 0` and `maxSurge: 1`. During a frontend update, confirm it keeps serving capacity:
+
+```bash
+kubectl rollout status deployment/frontend -n civicpulse
+kubectl get pods -n civicpulse -l app=frontend
+```
+
+## 7. Creating a Release
+
+Only tag a revision that has been merged to `main` and has a green CI run:
+
+```bash
+git checkout main
+git pull origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+`release.yml` accepts semantic version tags such as `v1.0.0` or `v1.0.0-rc.1`. It reruns the frontend and backend checks, then creates a GitHub draft release with generated notes. Review the CD/deployment result before publishing that draft; do not publish a release for an unverified image.
+
+## 8. Escalation Checklist
 
 Escalate to both project members when any of the following occurs:
 
