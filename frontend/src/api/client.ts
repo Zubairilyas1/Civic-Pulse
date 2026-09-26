@@ -37,6 +37,19 @@ function buildUrl(path: string, searchParams?: URLSearchParams): string {
   return `${getApiBaseUrl()}${path}${query ? `?${query}` : ""}`;
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  try {
+    return await response.json() as T;
+  } catch {
+    throw new ApiError(
+      "CivicPulse returned an invalid response. Please try again.",
+      response.status,
+      null,
+      response.headers.get("Retry-After"),
+    );
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
 
@@ -55,7 +68,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(getErrorMessage(detail, response.status), response.status, detail, response.headers.get("Retry-After"));
   }
 
-  return response.json() as Promise<T>;
+  return readJson<T>(response);
 }
 
 export const civicPulseApi = {
@@ -91,7 +104,7 @@ export const civicPulseApi = {
       throw new ApiError(getErrorMessage(detail, response.status), response.status, detail, response.headers.get("Retry-After"));
     }
     return {
-      data: await response.json() as ComplaintStats,
+      data: await readJson<ComplaintStats>(response),
       cacheStatus: response.headers.get("X-Cache"),
     };
   },
