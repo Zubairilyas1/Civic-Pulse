@@ -1,4 +1,4 @@
-import type { Complaint } from "../api/types";
+import type { Complaint, ComplaintStatus } from "../api/types";
 import { StatusBadge } from "./StatusBadge";
 
 function formatDate(value: string): string {
@@ -8,7 +8,22 @@ function formatDate(value: string): string {
     : new Intl.DateTimeFormat("en-PK", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-export function DashboardTable({ complaints }: { complaints: Complaint[] }) {
+export function getNextStatus(status: ComplaintStatus): ComplaintStatus | null {
+  const nextStatuses: Partial<Record<ComplaintStatus, ComplaintStatus>> = {
+    SUBMITTED: "TRIAGED",
+    TRIAGED: "IN_PROGRESS",
+    IN_PROGRESS: "RESOLVED",
+  };
+  return nextStatuses[status] || null;
+}
+
+interface DashboardTableProps {
+  complaints: Complaint[];
+  onAdvanceStatus: (complaint: Complaint) => void;
+  updatingComplaintId: string | null;
+}
+
+export function DashboardTable({ complaints, onAdvanceStatus, updatingComplaintId }: DashboardTableProps) {
   if (complaints.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900 p-10 text-center">
@@ -30,24 +45,60 @@ export function DashboardTable({ complaints }: { complaints: Complaint[] }) {
             <th className="px-4 py-4 font-medium" scope="col">Priority</th>
             <th className="px-4 py-4 font-medium" scope="col">Status</th>
             <th className="px-5 py-4 font-medium" scope="col">Created</th>
+            <th className="px-5 py-4 font-medium" scope="col"><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
           {complaints.map((complaint) => (
-            <tr className="align-top" key={complaint.id}>
-              <td className="max-w-xs px-5 py-4">
-                <p className="font-medium text-slate-100">{complaint.title}</p>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{complaint.summary || complaint.description}</p>
-              </td>
-              <td className="max-w-44 px-4 py-4 text-slate-300">{complaint.location}</td>
-              <td className="px-4 py-4"><StatusBadge value={complaint.category} /></td>
-              <td className="px-4 py-4"><StatusBadge value={complaint.priority} /></td>
-              <td className="px-4 py-4"><StatusBadge value={complaint.status} /></td>
-              <td className="whitespace-nowrap px-5 py-4 text-slate-400">{formatDate(complaint.created_at)}</td>
-            </tr>
+            <ComplaintRow
+              complaint={complaint}
+              isUpdating={updatingComplaintId === complaint.id}
+              key={complaint.id}
+              onAdvanceStatus={onAdvanceStatus}
+            />
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ComplaintRow({
+  complaint,
+  isUpdating,
+  onAdvanceStatus,
+}: {
+  complaint: Complaint;
+  isUpdating: boolean;
+  onAdvanceStatus: (complaint: Complaint) => void;
+}) {
+  const nextStatus = getNextStatus(complaint.status);
+
+  return (
+    <tr className="align-top">
+      <td className="max-w-xs px-5 py-4">
+        <p className="font-medium text-slate-100">{complaint.title}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">{complaint.summary || complaint.description}</p>
+      </td>
+      <td className="max-w-44 px-4 py-4 text-slate-300">{complaint.location}</td>
+      <td className="px-4 py-4"><StatusBadge value={complaint.category} /></td>
+      <td className="px-4 py-4"><StatusBadge value={complaint.priority} /></td>
+      <td className="px-4 py-4"><StatusBadge value={complaint.status} /></td>
+      <td className="whitespace-nowrap px-5 py-4 text-slate-400">{formatDate(complaint.created_at)}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-right">
+        {nextStatus ? (
+          <button
+            className="rounded-md border border-indigo-700 px-3 py-2 text-xs font-semibold text-indigo-200 hover:border-indigo-500 hover:bg-indigo-950 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            disabled={isUpdating}
+            onClick={() => onAdvanceStatus(complaint)}
+            type="button"
+          >
+            {isUpdating ? "Updating…" : `Advance to ${nextStatus.replaceAll("_", " ")}`}
+          </button>
+        ) : (
+          <span className="text-xs text-slate-500">Terminal state</span>
+        )}
+      </td>
+    </tr>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { civicPulseApi } from "../api/client";
 import { CATEGORIES, PRIORITIES, STATUSES, type Category, type Complaint, type ComplaintStatus, type Priority } from "../api/types";
-import { DashboardTable } from "../components/DashboardTable";
+import { DashboardTable, getNextStatus } from "../components/DashboardTable";
 import { Alert, LoadingPanel } from "../components/Feedback";
 
 const PAGE_SIZE = 10;
@@ -20,6 +20,9 @@ export function DashboardPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingTransition, setPendingTransition] = useState<Complaint | null>(null);
+  const [updatingComplaintId, setUpdatingComplaintId] = useState<string | null>(null);
+  const [transitionMessage, setTransitionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isCurrent = true;
@@ -59,6 +62,33 @@ export function DashboardPage() {
   function setFilter<K extends keyof FilterState>(key: K, value: FilterState[K]): void {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(0);
+  }
+
+  async function confirmTransition(): Promise<void> {
+    if (!pendingTransition) {
+      return;
+    }
+
+    const nextStatus = getNextStatus(pendingTransition.status);
+    if (!nextStatus) {
+      setPendingTransition(null);
+      return;
+    }
+
+    setUpdatingComplaintId(pendingTransition.id);
+    setError(null);
+    setTransitionMessage(null);
+
+    try {
+      const updatedComplaint = await civicPulseApi.updateComplaintStatus(pendingTransition.id, { status: nextStatus });
+      setComplaints((current) => current.map((complaint) => complaint.id === updatedComplaint.id ? updatedComplaint : complaint));
+      setTransitionMessage(`Status updated to ${updatedComplaint.status.replaceAll("_", " ")}.`);
+      setPendingTransition(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update the complaint status.");
+    } finally {
+      setUpdatingComplaintId(null);
+    }
   }
 
   return (
@@ -125,8 +155,17 @@ export function DashboardPage() {
 
       <div className="mt-6">
         {error && <Alert tone="error">{error}</Alert>}
-        <div className={error ? "mt-4" : ""}>
-          {isLoading ? <LoadingPanel label="Loading complaints" /> : <DashboardTable complaints={complaints} />}
+        {transitionMessage && <div className={error ? "mt-4" : ""}><Alert tone="success">{transitionMessage}</Alert></div>}
+        <div className={error || transitionMessage ? "mt-4" : ""}>
+          {isLoading ? (
+            <LoadingPanel label="Loading complaints" />
+          ) : (
+            <DashboardTable
+              complaints={complaints}
+              onAdvanceStatus={setPendingTransition}
+              updatingComplaintId={updatingComplaintId}
+            />
+          )}
         </div>
       </div>
 
@@ -148,6 +187,36 @@ export function DashboardPage() {
           Next
         </button>
       </nav>
+
+      {pendingTransition && (
+        <div className="fixed inset-0 z-10 grid place-items-center bg-slate-950/75 p-4">
+          <section aria-labelledby="transition-title" aria-modal="true" className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-xl" role="dialog">
+            <p className="text-sm font-semibold text-amber-300">Confirm status update</p>
+            <h2 className="mt-2 text-xl font-semibold" id="transition-title">Advance this complaint?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              <span className="font-medium text-slate-100">{pendingTransition.title}</span> will move from {pendingTransition.status.replaceAll("_", " ")} to {getNextStatus(pendingTransition.status)?.replaceAll("_", " ")}.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="rounded-md px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                disabled={updatingComplaintId === pendingTransition.id}
+                onClick={() => setPendingTransition(null)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                disabled={updatingComplaintId === pendingTransition.id}
+                onClick={() => void confirmTransition()}
+                type="button"
+              >
+                {updatingComplaintId === pendingTransition.id ? "Updating…" : "Confirm update"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
