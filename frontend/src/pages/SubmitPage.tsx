@@ -31,13 +31,13 @@ export function SubmitPage() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/60 px-3 py-1 text-xs font-bold text-emerald-400">
             <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-            <span>MUNICIPAL SERVICE PROTOCOL</span>
+            <span>SERVICE PROTOCOL</span>
           </div>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Submit a Civic Complaint
           </h1>
           <p className="mt-2 text-xs leading-relaxed text-slate-300">
-            Provide municipal details below. Complaints are validated client-side and automatically triaged across Groq LLM, Ollama, and Keyword Rule engines.
+            Submit municipal details below for client validation and AI engine triage.
           </p>
         </div>
 
@@ -172,41 +172,34 @@ export function SubmitPage() {
             {/* Classification Engines Legend */}
             <div className="col-span-6 space-y-2 text-xs">
               <span className="block text-[11px] font-bold text-slate-300 leading-tight">
-                Classifications recently found by engines:
+                Engine Classifications:
               </span>
               <ul className="space-y-1.5 font-medium text-[11px]">
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    Groq LLM success
+                    Groq LLM
                   </span>
                   <span className="font-mono font-extrabold text-white">58</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-teal-400" />
-                    Ollama success
+                    Ollama Local
                   </span>
                   <span className="font-mono font-extrabold text-white">22</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                    Groq LLM success
+                    Keyword Rules
                   </span>
                   <span className="font-mono font-extrabold text-white">10</span>
                 </li>
                 <li className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-slate-600" />
-                    Ollama LLM success
-                  </span>
-                  <span className="font-mono font-bold">0</span>
-                </li>
-                <li className="flex items-center justify-between text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-slate-600" />
-                    Groq LLM success
+                    Fallback Engine
                   </span>
                   <span className="font-mono font-bold">0</span>
                 </li>
@@ -230,28 +223,26 @@ export function SubmitPage() {
           <div className="mt-4 space-y-4">
             {/* Metric Box 1: Open Complaints */}
             <div className="rounded-xl border border-[#163638] bg-[#071718] p-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Open complaints</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Open Complaints</span>
               <div className="mt-1 text-4xl font-black text-white">{openComplaintsCount}</div>
-              <span className="text-xs text-slate-400 mt-1 block">Open complaints</span>
             </div>
 
             {/* Metric Box 2: Average Response Time */}
             <div className="rounded-xl border border-[#163638] bg-[#071718] p-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Average response time</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Average Response Time</span>
               <div className="mt-1 text-4xl font-black text-white">20 ms</div>
-              <span className="text-xs text-slate-400 mt-1 block">Average response times</span>
             </div>
 
             {/* High-priority Infrastructure Alerts Section */}
             <div className="pt-2">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
-                High-priority Infrastructure alerts
+                High-priority Infrastructure Alerts
               </h2>
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {[1, 2, 3, 4].map((idx) => (
-                  <div key={idx} className="flex items-center gap-3 rounded-xl border border-rose-900/40 bg-rose-950/20 p-3 text-xs text-rose-200">
+                  <div key={idx} className="flex items-center gap-3 rounded-xl border border-rose-900/40 bg-rose-950/20 p-2.5 text-xs text-rose-200">
                     <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
-                    <span className="font-semibold">High Priority Infrastructure alerts</span>
+                    <span className="font-semibold">Infrastructure Alert #{idx}</span>
                   </div>
                 ))}
               </div>
