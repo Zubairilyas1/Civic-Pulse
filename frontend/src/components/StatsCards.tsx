@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Layers, Clock, CheckCircle2, Database, Sparkles, Activity } from "lucide-react";
+import { Layers, Clock, CheckCircle2, Database, Activity } from "lucide-react";
 import type { ComplaintStats } from "../api/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -7,17 +7,17 @@ function MetricCard({ label, value, description, icon: Icon }: { label: string; 
   return (
     <motion.article
       whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      className="glass-panel relative overflow-hidden rounded-2xl p-6 shadow-xl"
+      transition={{ type: "spring" as const, stiffness: 350, damping: 25 }}
+      className="glass-panel relative overflow-hidden rounded-2xl p-6 shadow-xs hover:shadow-md transition-shadow"
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</span>
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <p className="mt-4 text-4xl font-extrabold tracking-tight text-white">{value}</p>
-      <p className="mt-2 text-xs leading-relaxed text-slate-400">{description}</p>
+      <p className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-2 text-xs leading-relaxed text-slate-500 font-medium">{description}</p>
     </motion.article>
   );
 }
@@ -25,13 +25,13 @@ function MetricCard({ label, value, description, icon: Icon }: { label: string; 
 function Breakdown({ title, values, total }: { title: string; values: Record<string, number>; total: number }) {
   const entries = Object.entries(values);
   return (
-    <section className="glass-panel rounded-2xl p-6 shadow-xl">
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
-        <h2 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-          <Activity className="h-4 w-4 text-indigo-400" />
+    <section className="glass-panel rounded-2xl p-6 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <h2 className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-emerald-600" />
           {title}
         </h2>
-        <span className="text-xs font-mono text-slate-500">{entries.length} groups</span>
+        <span className="text-xs font-mono font-bold text-slate-400">{entries.length} groups</span>
       </div>
       {entries.length ? (
         <dl className="mt-5 space-y-4">
@@ -40,15 +40,15 @@ function Breakdown({ title, values, total }: { title: string; values: Record<str
             return (
               <div key={label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <dt className="font-semibold text-slate-300">{label.replace(/_/g, " ")}</dt>
-                  <dd className="font-mono text-slate-100 font-bold">{count} <span className="text-slate-500 text-[10px]">({percentage}%)</span></dd>
+                  <dt className="font-bold text-slate-700">{label.replace(/_/g, " ")}</dt>
+                  <dd className="font-mono text-slate-900 font-extrabold">{count} <span className="text-slate-400 text-[10px]">({percentage}%)</span></dd>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-950/60 p-0.5 border border-white/5">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 p-0.5 border border-slate-200">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400 shadow-sm shadow-indigo-500/50"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 shadow-2xs"
                   />
                 </div>
               </div>
@@ -72,13 +72,13 @@ export function StatsCards({ stats, cacheStatus }: { stats: ComplaintStats; cach
 
   return (
     <div className="space-y-6">
-      <div className="glass-panel flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 sm:px-6">
-        <div className="flex items-center gap-2 text-xs text-slate-300">
-          <Database className="h-4 w-4 text-indigo-400" />
+      <div className="glass-panel flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 sm:px-6 shadow-xs">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <Database className="h-4 w-4 text-emerald-600" />
           <span>Municipal Database Telemetry Aggregated by CivicPulse API</span>
         </div>
-        <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-300">
-          <span className="text-slate-400">Redis 30s Cache Status:</span>
+        <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
+          <span className="text-slate-500">Redis 30s Cache Status:</span>
           {normalizedCacheStatus ? (
             <div className="flex items-center gap-2">
               <StatusBadge value={normalizedCacheStatus} />
@@ -88,7 +88,7 @@ export function StatsCards({ stats, cacheStatus }: { stats: ComplaintStats; cach
               </span>
             </div>
           ) : (
-            <span className="text-slate-500">Unavailable</span>
+            <span className="text-slate-400">Unavailable</span>
           )}
         </div>
       </div>
