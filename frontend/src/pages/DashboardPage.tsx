@@ -105,36 +105,36 @@ export function DashboardPage() {
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md">
-            <LayoutDashboard className="h-3.5 w-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
+            <LayoutDashboard className="h-3.5 w-3.5 text-emerald-600" />
             <span>OPERATIONAL COMPLAINT QUEUE</span>
           </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Complaints Dashboard
           </h1>
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
             Monitor, inspect, and advance complaint status transitions across all municipal service channels.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-1.5 backdrop-blur-md text-xs font-semibold text-slate-300">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 shadow-2xs text-xs font-semibold text-slate-700">
           <span>Page {page + 1}</span>
-          <span className="text-slate-600">•</span>
-          <span className="text-indigo-400">{complaints.length} records shown</span>
+          <span className="text-slate-300">•</span>
+          <span className="text-emerald-700 font-bold">{complaints.length} records shown</span>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="glass-panel mt-8 rounded-2xl p-5 shadow-xl">
+      <div className="glass-panel mt-8 rounded-2xl p-5 shadow-xs">
         <div className="mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
-            <Filter className="h-4 w-4 text-indigo-400" />
+          <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700">
+            <Filter className="h-4 w-4 text-emerald-600" />
             Queue Filtering Criteria
           </span>
           {isFiltered && (
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+              className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800"
               onClick={() => {
                 setFilters(initialFilters);
                 setPage(0);
@@ -148,10 +148,10 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <label className="text-xs font-semibold text-slate-300" htmlFor="filter-category">
+          <label className="text-xs font-bold text-slate-700" htmlFor="filter-category">
             Category
             <select
-              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-medium text-slate-100 focus:outline-none"
+              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-900 focus:outline-none"
               id="filter-category"
               onChange={(event) => setFilter("category", event.target.value as FilterState["category"])}
               value={filters.category}
@@ -161,10 +161,10 @@ export function DashboardPage() {
             </select>
           </label>
 
-          <label className="text-xs font-semibold text-slate-300" htmlFor="filter-priority">
+          <label className="text-xs font-bold text-slate-700" htmlFor="filter-priority">
             Priority Level
             <select
-              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-medium text-slate-100 focus:outline-none"
+              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-900 focus:outline-none"
               id="filter-priority"
               onChange={(event) => setFilter("priority", event.target.value as FilterState["priority"])}
               value={filters.priority}
@@ -174,10 +174,10 @@ export function DashboardPage() {
             </select>
           </label>
 
-          <label className="text-xs font-semibold text-slate-300" htmlFor="filter-status">
+          <label className="text-xs font-bold text-slate-700" htmlFor="filter-status">
             Complaint Status
             <select
-              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-medium text-slate-100 focus:outline-none"
+              className="glass-input mt-1.5 block w-full rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-900 focus:outline-none"
               id="filter-status"
               onChange={(event) => setFilter("status", event.target.value as FilterState["status"])}
               value={filters.status}
@@ -211,7 +211,7 @@ export function DashboardPage() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2.5 text-xs font-bold text-slate-200 backdrop-blur-md hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={page === 0 || isLoading}
           onClick={() => setPage((current) => Math.max(0, current - 1))}
           type="button"
@@ -219,11 +219,11 @@ export function DashboardPage() {
           <ChevronLeft className="h-4 w-4" />
           Previous Page
         </motion.button>
-        <span className="text-xs font-medium text-slate-500">Page {page + 1}</span>
+        <span className="text-xs font-bold text-slate-500">Page {page + 1}</span>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2.5 text-xs font-bold text-slate-200 backdrop-blur-md hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={complaints.length < PAGE_SIZE || isLoading}
           onClick={() => setPage((current) => current + 1)}
           type="button"
@@ -236,35 +236,35 @@ export function DashboardPage() {
       {/* Status Transition Confirmation Modal */}
       <AnimatePresence>
         {pendingTransition && (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-xs">
             <motion.section
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              transition={{ type: "spring" as const, stiffness: 350, damping: 25 }}
               aria-labelledby="transition-title"
               aria-modal="true"
-              className="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl"
+              className="glass-panel w-full max-w-md rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl"
               role="dialog"
             >
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300">
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-700">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
                 State Machine Transition
               </div>
-              <h2 className="mt-2 text-xl font-bold tracking-tight text-white" id="transition-title">
+              <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900" id="transition-title">
                 Advance this complaint?
               </h2>
-              <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/50 p-4">
-                <p className="text-sm font-semibold text-slate-100">{pendingTransition.title}</p>
-                <div className="mt-3 flex items-center justify-between text-xs font-medium">
-                  <span className="rounded bg-slate-800 px-2 py-1 text-slate-300">{pendingTransition.status.replace(/_/g, " ")}</span>
-                  <ArrowRight className="h-4 w-4 text-slate-500" />
-                  <span className="rounded bg-indigo-600 px-2 py-1 text-white font-bold">{getNextStatus(pendingTransition.status)?.replace(/_/g, " ")}</span>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-bold text-slate-900">{pendingTransition.title}</p>
+                <div className="mt-3 flex items-center justify-between text-xs font-semibold">
+                  <span className="rounded bg-slate-200 px-2.5 py-1 text-slate-700">{pendingTransition.status.replace(/_/g, " ")}</span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                  <span className="rounded bg-emerald-600 px-2.5 py-1 text-white font-bold">{getNextStatus(pendingTransition.status)?.replace(/_/g, " ")}</span>
                 </div>
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-400 hover:bg-slate-800 hover:text-white"
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   disabled={updatingComplaintId === pendingTransition.id}
                   onClick={() => setPendingTransition(null)}
                   type="button"
@@ -275,7 +275,7 @@ export function DashboardPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   aria-label="Confirm update"
-                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+                  className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 disabled:opacity-50"
                   disabled={updatingComplaintId === pendingTransition.id}
                   onClick={() => void confirmTransition()}
                   type="button"
