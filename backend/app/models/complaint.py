@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, String, Text
+from sqlalchemy import DateTime, Float, Index, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,6 +13,10 @@ class Complaint(Base):
     """SQLAlchemy ORM Model for Civic Complaints."""
 
     __tablename__ = "complaints"
+    __table_args__ = (
+        Index("idx_status_created_at", "status", "created_at"),
+        Index("idx_category_priority", "category", "priority"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     title: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
