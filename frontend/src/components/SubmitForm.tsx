@@ -85,16 +85,16 @@ export function SubmitForm() {
       <motion.form
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl text-slate-900"
+        className="rounded-2xl border border-[#183d40] bg-[#0B1E1F]/90 backdrop-blur-md p-6 shadow-2xl text-slate-100"
         noValidate
         onSubmit={handleSubmit}
       >
-        <div className="mb-5 border-b border-slate-200 pb-4">
-          <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-emerald-600" />
+        <div className="mb-5 border-b border-[#183d40] pb-4">
+          <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+            <FileText className="h-5 w-5 text-emerald-400" />
             Issue Details
           </h2>
-          <p className="mt-1 text-xs font-medium text-slate-500">
+          <p className="mt-1 text-xs font-medium text-slate-300">
             Provide complete detail so the municipal team can triage and resolve the issue quickly.
           </p>
         </div>
@@ -102,7 +102,7 @@ export function SubmitForm() {
         <div className="space-y-5">
           {/* Title Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-title">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-200" htmlFor="complaint-title">
               Complaint Title
             </label>
             <div className="relative mt-2">
@@ -112,7 +112,7 @@ export function SubmitForm() {
               <input
                 aria-describedby={errors.title ? "title-error" : "title-help"}
                 aria-invalid={Boolean(errors.title)}
-                className="glass-input block w-full rounded-xl py-3 pl-10 pr-10 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="glass-input block w-full rounded-xl py-3 pl-10 pr-10 text-sm font-medium text-slate-100 bg-[#071718] border-[#183a3d] placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                 id="complaint-title"
                 maxLength={150}
                 onChange={(event) => updateField("title", event.target.value)}
@@ -120,19 +120,19 @@ export function SubmitForm() {
                 value={values.title}
               />
               {isTitleValid && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-emerald-600">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-emerald-400">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
               )}
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium" id="title-help">5–150 characters</span>
-              <span className={`font-mono text-[11px] font-bold ${isTitleValid ? "text-emerald-700" : "text-slate-400"}`}>
+              <span className="text-slate-400 font-medium" id="title-help">5–150 characters</span>
+              <span className={`font-mono text-[11px] font-bold ${isTitleValid ? "text-emerald-400" : "text-slate-500"}`}>
                 {isTitleValid ? "✓ " : ""}{values.title.length}/150
               </span>
             </div>
             {errors.title && (
-              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="title-error">
+              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-400" id="title-error">
                 <AlertCircle className="h-3.5 w-3.5" />
                 {errors.title}
               </motion.span>
@@ -141,7 +141,7 @@ export function SubmitForm() {
 
           {/* Description Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-description">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-200" htmlFor="complaint-description">
               Detailed Description
             </label>
             <div className="relative mt-2">
@@ -151,7 +151,7 @@ export function SubmitForm() {
               <textarea
                 aria-describedby={errors.description ? "description-error" : "description-help"}
                 aria-invalid={Boolean(errors.description)}
-                className="glass-input block min-h-32 w-full resize-y rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="glass-input block min-h-32 w-full resize-y rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-100 bg-[#071718] border-[#183a3d] placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                 id="complaint-description"
                 maxLength={2000}
                 onChange={(event) => updateField("description", event.target.value)}
@@ -160,13 +160,13 @@ export function SubmitForm() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium" id="description-help">10–2,000 characters</span>
-              <span className={`font-mono text-[11px] ${values.description.length > 1900 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
+              <span className="text-slate-400 font-medium" id="description-help">10–2,000 characters</span>
+              <span className={`font-mono text-[11px] ${values.description.length > 1900 ? "text-amber-400 font-bold" : "text-slate-500"}`}>
                 {values.description.length}/2000
               </span>
             </div>
             {errors.description && (
-              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="description-error">
+              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-400" id="description-error">
                 <AlertCircle className="h-3.5 w-3.5" />
                 {errors.description}
               </motion.span>
@@ -175,7 +175,7 @@ export function SubmitForm() {
 
           {/* Location Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-location">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-200" htmlFor="complaint-location">
               Location / Area Address
             </label>
             <div className="relative mt-2">
@@ -185,7 +185,7 @@ export function SubmitForm() {
               <input
                 aria-describedby={errors.location ? "location-error" : "location-help"}
                 aria-invalid={Boolean(errors.location)}
-                className="glass-input block w-full rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="glass-input block w-full rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-100 bg-[#071718] border-[#183a3d] placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                 id="complaint-location"
                 maxLength={200}
                 onChange={(event) => updateField("location", event.target.value)}
@@ -194,11 +194,11 @@ export function SubmitForm() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium" id="location-help">3–200 characters</span>
-              <span className="font-mono text-[11px] text-slate-400">{values.location.length}/200</span>
+              <span className="text-slate-400 font-medium" id="location-help">3–200 characters</span>
+              <span className="font-mono text-[11px] text-slate-500">{values.location.length}/200</span>
             </div>
             {errors.location && (
-              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="location-error">
+              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-400" id="location-error">
                 <AlertCircle className="h-3.5 w-3.5" />
                 {errors.location}
               </motion.span>

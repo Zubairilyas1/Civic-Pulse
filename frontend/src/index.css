@@ -15,9 +15,10 @@
     min-height: 100vh;
     background-color: #0b1c1d;
     background-image: 
+      radial-gradient(rgba(16, 185, 129, 0.12) 1px, transparent 1px),
       radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 40%),
-      radial-gradient(at 0% 100%, rgba(13, 148, 136, 0.06) 0px, transparent 40%),
-      radial-gradient(at 50% 50%, rgba(11, 28, 29, 0.8) 0px, transparent 50%);
+      radial-gradient(at 0% 100%, rgba(13, 148, 136, 0.08) 0px, transparent 40%);
+    background-size: 24px 24px, 100% 100%, 100% 100%;
     background-attachment: fixed;
     color: #f1f5f9;
     -webkit-font-smoothing: antialiased;
