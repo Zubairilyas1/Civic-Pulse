@@ -78,27 +78,31 @@ export function SubmitForm() {
     }
   }
 
+  const isTitleValid = values.title.length >= 5 && values.title.length <= 150;
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.75fr)]">
+    <div className="space-y-6">
       <motion.form
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel rounded-2xl p-6 sm:p-8"
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl text-slate-900"
         noValidate
         onSubmit={handleSubmit}
       >
-        <div className="mb-6 border-b border-slate-200 pb-5">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+        <div className="mb-5 border-b border-slate-200 pb-4">
+          <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
             <FileText className="h-5 w-5 text-emerald-600" />
             Issue Details
           </h2>
-          <p className="mt-1 text-xs text-slate-500">Provide complete detail so the municipal team can triage and resolve the issue quickly.</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Provide complete detail so the municipal team can triage and resolve the issue quickly.
+          </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Title Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700" htmlFor="complaint-title">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-title">
               Complaint Title
             </label>
             <div className="relative mt-2">
@@ -108,18 +112,23 @@ export function SubmitForm() {
               <input
                 aria-describedby={errors.title ? "title-error" : "title-help"}
                 aria-invalid={Boolean(errors.title)}
-                className="glass-input block w-full rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="glass-input block w-full rounded-xl py-3 pl-10 pr-10 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
                 id="complaint-title"
                 maxLength={150}
                 onChange={(event) => updateField("title", event.target.value)}
                 placeholder="e.g. Water main pipeline leaking near sector market"
                 value={values.title}
               />
+              {isTitleValid && (
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              )}
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500" id="title-help">5–150 characters</span>
-              <span className={`font-mono text-[11px] ${values.title.length > 140 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
-                {values.title.length}/150
+              <span className="text-slate-500 font-medium" id="title-help">5–150 characters</span>
+              <span className={`font-mono text-[11px] font-bold ${isTitleValid ? "text-emerald-700" : "text-slate-400"}`}>
+                {isTitleValid ? "✓ " : ""}{values.title.length}/150
               </span>
             </div>
             {errors.title && (
@@ -132,7 +141,7 @@ export function SubmitForm() {
 
           {/* Description Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700" htmlFor="complaint-description">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-description">
               Detailed Description
             </label>
             <div className="relative mt-2">
@@ -142,16 +151,16 @@ export function SubmitForm() {
               <textarea
                 aria-describedby={errors.description ? "description-error" : "description-help"}
                 aria-invalid={Boolean(errors.description)}
-                className="glass-input block min-h-36 w-full resize-y rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="glass-input block min-h-32 w-full resize-y rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
                 id="complaint-description"
                 maxLength={2000}
                 onChange={(event) => updateField("description", event.target.value)}
-                placeholder="Include what happened, how long it has been happening, and any immediate safety risk..."
+                placeholder="Include what happened, how long it has been happening, and any immediate safety..."
                 value={values.description}
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500" id="description-help">10–2,000 characters</span>
+              <span className="text-slate-500 font-medium" id="description-help">10–2,000 characters</span>
               <span className={`font-mono text-[11px] ${values.description.length > 1900 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
                 {values.description.length}/2000
               </span>
@@ -166,7 +175,7 @@ export function SubmitForm() {
 
           {/* Location Field */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700" htmlFor="complaint-location">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-800" htmlFor="complaint-location">
               Location / Area Address
             </label>
             <div className="relative mt-2">
@@ -185,7 +194,7 @@ export function SubmitForm() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500" id="location-help">3–200 characters</span>
+              <span className="text-slate-500 font-medium" id="location-help">3–200 characters</span>
               <span className="font-mono text-[11px] text-slate-400">{values.location.length}/200</span>
             </div>
             {errors.location && (
@@ -197,13 +206,13 @@ export function SubmitForm() {
           </div>
         </div>
 
-        {submissionError && <div className="mt-6"><Alert tone="error">{submissionError}</Alert></div>}
+        {submissionError && <div className="mt-5"><Alert tone="error">{submissionError}</Alert></div>}
 
         <motion.button
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           aria-label="Submit complaint"
-          className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-700/30 transition-all hover:from-emerald-500 hover:to-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting}
           type="submit"
         >
@@ -221,96 +230,43 @@ export function SubmitForm() {
         </motion.button>
       </motion.form>
 
-      {/* AI Triage Result Panel */}
-      <aside aria-live="polite" className="glass-panel flex flex-col justify-between rounded-2xl p-6 sm:p-8">
-        <div>
-          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-            <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-emerald-700">
-              <Sparkles className="h-4 w-4 text-emerald-600" />
-              Triage Output Engine
-            </span>
-            <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
-              Live Pipeline
-            </span>
-          </div>
+      {/* Triage Output Live Result Alert */}
+      <AnimatePresence mode="wait">
+        {createdComplaint && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            aria-live="polite"
+            className="rounded-2xl border border-emerald-500/40 bg-[#0B1E1F] p-5 shadow-2xl text-slate-100 space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-[#1A383B] pb-3">
+              <h2 className="text-base font-bold text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                Complaint received
+              </h2>
+              <span className="font-mono text-xs text-emerald-300 font-bold">Ref: {createdComplaint.id.substring(0, 8)}</span>
+            </div>
 
-          <AnimatePresence mode="wait">
-            {isSubmitting ? (
-              <motion.div
-                key="submitting"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                aria-label="Triage in progress"
-                aria-busy="true"
-                className="mt-6 space-y-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
-                  <span className="text-sm font-semibold text-slate-700">Analyzing complaint text…</span>
-                </div>
-                <div className="h-5 w-2/5 animate-pulse rounded bg-slate-200" />
-                <div className="h-20 w-full animate-pulse rounded-xl bg-slate-100" />
-                <div className="h-16 w-full animate-pulse rounded-xl bg-slate-100" />
-              </motion.div>
-            ) : createdComplaint ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
-                className="mt-6 space-y-5"
-              >
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <h2 className="text-base font-bold text-emerald-800 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                    Complaint received
-                  </h2>
-                  <p className="mt-1 text-xs text-emerald-700 font-mono">Reference: {createdComplaint.id}</p>
-                </div>
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge value={createdComplaint.status} />
+              <StatusBadge value={createdComplaint.category} />
+              <StatusBadge value={createdComplaint.priority} />
+            </div>
 
-                <div className="space-y-3">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Classified Badges</span>
-                  <div className="flex flex-wrap gap-2">
-                    <StatusBadge value={createdComplaint.status} />
-                    <StatusBadge value={createdComplaint.category} />
-                    <StatusBadge value={createdComplaint.priority} />
-                  </div>
-                </div>
-
-                <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">AI Generated Summary</span>
-                    <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800">
-                      {createdComplaint.summary || "Triage completed."}
-                    </p>
-                  </div>
-                  <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Triaged By Provider:</span>
-                    <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
-                      {createdComplaint.triaged_by || "Rules Engine"}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-6 text-center">
-                  <ShieldCheck className="mx-auto h-10 w-10 text-emerald-600" />
-                  <p className="mt-3 text-xs font-medium leading-relaxed text-slate-600">
-                    Submitted complaints are processed by the triage provider. The classified badges and summary appear here upon completion.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="mt-8 border-t border-slate-200 pt-4 text-[11px] font-semibold text-slate-400 flex items-center justify-between">
-          <span>PII Masking Guardrails Active</span>
-          <span className="text-emerald-700">SHA-256 Encrypted</span>
-        </div>
-      </aside>
+            <div className="rounded-xl border border-[#183a3d] bg-[#071718] p-3.5 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">AI Generated Triage Summary</span>
+              <p className="text-xs leading-relaxed text-slate-200">{createdComplaint.summary || "Triage completed."}</p>
+              <div className="flex items-center justify-between text-[11px] border-t border-[#183a3d] pt-2">
+                <span className="text-slate-400">Triaged By Provider:</span>
+                <span className="font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 font-mono">
+                  {createdComplaint.triaged_by || "simulated_v1"}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
