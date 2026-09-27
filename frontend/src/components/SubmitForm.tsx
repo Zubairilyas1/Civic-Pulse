@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, AlignLeft, MapPin, Send, Sparkles, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
+import { FileText, AlignLeft, MapPin, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { ApiError, civicPulseApi } from "../api/client";
 import type { Complaint, ComplaintCreateInput } from "../api/types";
 import { Alert } from "./Feedback";
