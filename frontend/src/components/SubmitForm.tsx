@@ -79,52 +79,47 @@ export function SubmitForm() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] items-stretch">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)] items-stretch">
       {/* Left Form Card */}
       <motion.form
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel rounded-2xl p-6 sm:p-8 flex flex-col justify-between"
+        className="glass-panel rounded-2xl p-5 sm:p-6 flex flex-col justify-between h-full"
         noValidate
         onSubmit={handleSubmit}
       >
         <div>
-          <div className="mb-6 border-b border-slate-200/80 pb-5 flex items-center justify-between">
+          <div className="mb-4 border-b border-slate-200/80 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
+              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                <div className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
                   <FileText className="h-4 w-4" />
                 </div>
                 Issue Details
               </h2>
-              <p className="mt-1 text-xs text-slate-500 font-medium">
+              <p className="mt-0.5 text-xs text-slate-500 font-medium">
                 Provide complete detail so the municipal team can triage and resolve the issue quickly.
               </p>
             </div>
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
               Real-Time Validation
             </span>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Title Field */}
             <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-700" htmlFor="complaint-title">
-                  Complaint Title
-                </label>
-                <span className={`font-mono text-[11px] font-semibold ${values.title.length > 140 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
-                  {values.title.length}/150
-                </span>
-              </div>
-              <div className="relative mt-1.5">
+              <label className="block text-xs font-semibold text-slate-700" htmlFor="complaint-title">
+                Complaint Title
+              </label>
+              <div className="relative mt-1">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                   <FileText className="h-4 w-4" />
                 </div>
                 <input
                   aria-describedby={errors.title ? "title-error" : "title-help"}
                   aria-invalid={Boolean(errors.title)}
-                  className="glass-input block w-full rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  className="glass-input block w-full rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
                   id="complaint-title"
                   maxLength={150}
                   onChange={(event) => updateField("title", event.target.value)}
@@ -134,6 +129,9 @@ export function SubmitForm() {
               </div>
               <div className="mt-1 flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium text-[11px]" id="title-help">5–150 characters</span>
+                <span className={`font-mono text-[11px] font-semibold ${values.title.length > 140 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
+                  {values.title.length}/150
+                </span>
               </div>
               {errors.title && (
                 <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="title-error">
@@ -145,22 +143,17 @@ export function SubmitForm() {
 
             {/* Description Field */}
             <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-700" htmlFor="complaint-description">
-                  Detailed Description
-                </label>
-                <span className={`font-mono text-[11px] font-semibold ${values.description.length > 1900 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
-                  {values.description.length}/2000
-                </span>
-              </div>
-              <div className="relative mt-1.5">
-                <div className="pointer-events-none absolute top-3.5 left-0 flex items-center pl-3.5 text-slate-400">
+              <label className="block text-xs font-semibold text-slate-700" htmlFor="complaint-description">
+                Detailed Description
+              </label>
+              <div className="relative mt-1">
+                <div className="pointer-events-none absolute top-3 left-0 flex items-center pl-3.5 text-slate-400">
                   <AlignLeft className="h-4 w-4" />
                 </div>
                 <textarea
                   aria-describedby={errors.description ? "description-error" : "description-help"}
                   aria-invalid={Boolean(errors.description)}
-                  className="glass-input block min-h-36 w-full resize-y rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  className="glass-input block min-h-24 sm:min-h-28 w-full resize-y rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
                   id="complaint-description"
                   maxLength={2000}
                   onChange={(event) => updateField("description", event.target.value)}
@@ -170,6 +163,9 @@ export function SubmitForm() {
               </div>
               <div className="mt-1 flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium text-[11px]" id="description-help">10–2,000 characters</span>
+                <span className={`font-mono text-[11px] font-semibold ${values.description.length > 1900 ? "text-amber-600 font-bold" : "text-slate-400"}`}>
+                  {values.description.length}/2000
+                </span>
               </div>
               {errors.description && (
                 <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="description-error">
@@ -181,20 +177,17 @@ export function SubmitForm() {
 
             {/* Location Field */}
             <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-700" htmlFor="complaint-location">
-                  Location / Area Address
-                </label>
-                <span className="font-mono text-[11px] text-slate-400 font-semibold">{values.location.length}/200</span>
-              </div>
-              <div className="relative mt-1.5">
+              <label className="block text-xs font-semibold text-slate-700" htmlFor="complaint-location">
+                Location / Area Address
+              </label>
+              <div className="relative mt-1">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                   <MapPin className="h-4 w-4" />
                 </div>
                 <input
                   aria-describedby={errors.location ? "location-error" : "location-help"}
                   aria-invalid={Boolean(errors.location)}
-                  className="glass-input block w-full rounded-xl py-3 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  className="glass-input block w-full rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
                   id="complaint-location"
                   maxLength={200}
                   onChange={(event) => updateField("location", event.target.value)}
@@ -204,6 +197,7 @@ export function SubmitForm() {
               </div>
               <div className="mt-1 flex items-center justify-between text-xs">
                 <span className="text-slate-500 font-medium text-[11px]" id="location-help">3–200 characters</span>
+                <span className="font-mono text-[11px] text-slate-400 font-semibold">{values.location.length}/200</span>
               </div>
               {errors.location && (
                 <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs font-semibold text-rose-600" id="location-error">
@@ -216,13 +210,13 @@ export function SubmitForm() {
         </div>
 
         <div>
-          {submissionError && <div className="mt-6"><Alert tone="error">{submissionError}</Alert></div>}
+          {submissionError && <div className="mt-4"><Alert tone="error">{submissionError}</Alert></div>}
 
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             aria-label="Submit complaint"
-            className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isSubmitting}
             type="submit"
           >
@@ -242,9 +236,9 @@ export function SubmitForm() {
       </motion.form>
 
       {/* Right AI Triage Output & Engine Panel */}
-      <aside aria-live="polite" className="glass-panel flex flex-col justify-between rounded-2xl p-6 sm:p-8 space-y-6 h-full">
+      <aside aria-live="polite" className="glass-panel flex flex-col justify-between rounded-2xl p-5 sm:p-6 space-y-5 h-full">
         <div>
-          <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-3.5">
             <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-emerald-800">
               <Sparkles className="h-4 w-4 text-emerald-600" />
               Triage Output Engine
@@ -264,7 +258,7 @@ export function SubmitForm() {
                 exit={{ opacity: 0 }}
                 aria-label="Triage in progress"
                 aria-busy="true"
-                className="mt-6 space-y-4"
+                className="mt-4 space-y-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
@@ -280,7 +274,7 @@ export function SubmitForm() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
-                className="mt-6 space-y-5"
+                className="mt-4 space-y-4"
               >
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 p-4 shadow-2xs">
                   <h2 className="text-base font-extrabold text-emerald-900 flex items-center gap-2">
@@ -290,7 +284,7 @@ export function SubmitForm() {
                   <p className="mt-1 text-xs text-emerald-700 font-mono font-bold">Reference ID: {createdComplaint.id}</p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Classified Badges</span>
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge value={createdComplaint.status} />
@@ -299,14 +293,14 @@ export function SubmitForm() {
                   </div>
                 </div>
 
-                <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/90 p-4 shadow-2xs">
+                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/90 p-4 shadow-2xs">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-600">AI Generated Summary</span>
                     <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-900">
                       {createdComplaint.summary || "Triage completed."}
                     </p>
                   </div>
-                  <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs">
+                  <div className="border-t border-slate-200 pt-2.5 flex items-center justify-between text-xs">
                     <span className="text-slate-600 font-medium">Triaged By Provider:</span>
                     <span className="font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-200 font-mono">
                       {createdComplaint.triaged_by || "Rules Engine"}
@@ -315,10 +309,10 @@ export function SubmitForm() {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-5">
-                <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 p-6 shadow-xs text-center space-y-4">
-                  <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 shadow-2xs">
-                    <ShieldCheck className="h-6 w-6" />
+              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 p-5 shadow-xs text-center space-y-3">
+                  <div className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 shadow-2xs">
+                    <ShieldCheck className="h-5 w-5" />
                   </div>
                   <h3 className="text-sm font-extrabold text-slate-900">Multi-Engine AI Triage Active</h3>
                   <p className="text-xs font-medium leading-relaxed text-slate-600">
@@ -327,27 +321,27 @@ export function SubmitForm() {
                 </div>
 
                 {/* Engine Telemetry Stack */}
-                <div className="space-y-2.5 pt-2">
+                <div className="space-y-2 pt-1">
                   <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Engine Provider Fallback Stack</span>
                   
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-2xs">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 text-xs shadow-2xs">
+                    <div className="flex items-center gap-2">
                       <Cpu className="h-4 w-4 text-emerald-600" />
                       <span className="font-bold text-slate-800">Groq LLM (Llama-3.3 70B)</span>
                     </div>
                     <span className="rounded bg-emerald-50 text-emerald-700 px-2 py-0.5 font-bold font-mono text-[10px] border border-emerald-200">Primary</span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-2xs">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 text-xs shadow-2xs">
+                    <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-teal-600" />
                       <span className="font-bold text-slate-800">Ollama (Local Fallback)</span>
                     </div>
                     <span className="rounded bg-teal-50 text-teal-700 px-2 py-0.5 font-bold font-mono text-[10px] border border-teal-200">Local</span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-2xs">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 text-xs shadow-2xs">
+                    <div className="flex items-center gap-2">
                       <Lock className="h-4 w-4 text-indigo-600" />
                       <span className="font-bold text-slate-800">Deterministic Rule Engine</span>
                     </div>
@@ -359,7 +353,7 @@ export function SubmitForm() {
           </AnimatePresence>
         </div>
 
-        <div className="border-t border-slate-200/80 pt-4 text-[11px] font-semibold text-slate-500 flex items-center justify-between">
+        <div className="border-t border-slate-200/80 pt-3 text-[11px] font-semibold text-slate-500 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             End-to-End Encrypted &amp; Privacy Protected
