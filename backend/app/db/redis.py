@@ -12,13 +12,22 @@ class RedisService:
     """Async Redis Service with in-memory fallback for testing and offline environments."""
 
     _redis_client: aioredis.Redis | None = None
+    _connection_attempted: bool = False
     _memory_cache: dict[str, tuple[str, float]] = {}
 
     @classmethod
+    async def reset(cls) -> None:
+        """Reset connection state for testing."""
+        cls._redis_client = None
+        cls._connection_attempted = False
+        cls._memory_cache.clear()
+
+    @classmethod
     async def get_client(cls) -> aioredis.Redis | None:
-        if cls._redis_client is None:
+        if cls._redis_client is None and not cls._connection_attempted:
+            cls._connection_attempted = True
             try:
-                client = aioredis.from_url(settings.REDIS_URL, decode_responses=True, socket_timeout=2.0)
+                client = aioredis.from_url(settings.REDIS_URL, decode_responses=True, socket_timeout=0.5)
                 await client.ping()
                 cls._redis_client = client
                 logger.info("Connected to Redis successfully.")
@@ -50,7 +59,6 @@ class RedisService:
         if client:
             try:
                 await client.set(key, value, ex=ex)
-                return
             except Exception:
                 pass
 
@@ -63,7 +71,6 @@ class RedisService:
         if client:
             try:
                 await client.delete(key)
-                return
             except Exception:
                 pass
 
