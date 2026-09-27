@@ -20,7 +20,7 @@ const styleByValue: Record<Exclude<BadgeValue, null>, { style: string; dot: stri
   SANITATION: { style: "bg-teal-50 text-teal-800 ring-1 ring-teal-200", dot: "bg-teal-500", icon: Shield },
   OTHER: { style: "bg-slate-100 text-slate-700 ring-1 ring-slate-200", dot: "bg-slate-500", icon: CircleHelp },
   HIT: { style: "bg-emerald-950 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200", dot: "bg-emerald-500", icon: CheckCircle2 },
-  MISS: { style: "bg-rose-50 text-rose-800 ring-1 ring-rose-200", dot: "bg-rose-500", icon: ShieldAlert },
+  MISS: { style: "bg-slate-100 text-slate-700 ring-1 ring-slate-200", dot: "bg-slate-400", icon: Clock },
 };
 
 export function StatusBadge({ value }: { value: BadgeValue }) {

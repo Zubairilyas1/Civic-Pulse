@@ -100,8 +100,8 @@ export function SubmitForm() {
               Provide complete detail so the municipal team can triage and resolve the issue quickly.
             </p>
           </div>
-          <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-200">
-            Form Validation Active
+          <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+            Error Prevention Active
           </span>
         </div>
 
@@ -316,9 +316,9 @@ export function SubmitForm() {
                   </p>
                 </div>
 
-                {/* Engine Telemetry Cards */}
+                {/* Engine Telemetry Stack */}
                 <div className="space-y-2.5 pt-2">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Engine Provider Stack</span>
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Engine Provider Fallback Stack</span>
                   
                   <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-2xs">
                     <div className="flex items-center gap-2.5">

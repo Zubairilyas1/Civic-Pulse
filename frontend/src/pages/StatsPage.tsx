@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { BarChart3, RefreshCw } from "lucide-react";
+import { BarChart3, RefreshCw, Activity } from "lucide-react";
 import { civicPulseApi } from "../api/client";
 import type { ComplaintStats } from "../api/types";
 import { Alert, LoadingPanel } from "../components/Feedback";
@@ -53,26 +53,32 @@ export function StatsPage() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
             <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
-            <span>MUNICIPAL METRICS & REDIS CACHE</span>
+            <span>OPERATIONS & PERFORMANCE ANALYTICS</span>
           </div>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            System Analytics & Cache Status
+            System Analytics & Metrics
           </h1>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
-            Real-time aggregate totals, complaint category breakdowns, and Redis 30-second TTL cache status indicators.
+            Real-time aggregate totals, complaint category breakdowns, and Redis 30-second TTL cache performance indicators.
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.96 }}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 hover:text-slate-900 disabled:opacity-50"
-          disabled={isLoading}
-          onClick={() => setRefreshKey((current) => current + 1)}
-          type="button"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-emerald-600" : "text-slate-400"}`} />
-          {isLoading ? "Refreshing Payload…" : "Refresh Statistics"}
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs">
+            <Activity className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+            <span>Auto-Sync Active</span>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 hover:text-slate-900 disabled:opacity-50"
+            disabled={isLoading}
+            onClick={() => setRefreshKey((current) => current + 1)}
+            type="button"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-emerald-600" : "text-slate-400"}`} />
+            {isLoading ? "Refreshing Payload…" : "Refresh Statistics"}
+          </motion.button>
+        </div>
       </div>
 
       <div className="mt-8">
