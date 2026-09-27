@@ -46,13 +46,26 @@ The backend follows a strict 4-layer architecture isolating HTTP interface conce
 
 ## Question 2: Frontend Runtime Configuration & Nginx Strategy (Sami)
 
-*Assigned to Sami — [Docs placeholder]*
+The frontend deliberately separates build-time JavaScript from deployment-time API configuration:
+
+1. **Runtime configuration contract:** `frontend/index.html:12` loads `/config.js` before the Vite module. `frontend/src/api/config.ts:3-14` reads `window.__CIVICPULSE_CONFIG__.API_BASE_URL` and safely defaults to the relative `/api` path. The typed client composes every request from this value (`frontend/src/api/client.ts:35-37`), so individual components never contain a backend host.
+2. **One image for every environment:** Vite development serves `frontend/public/config.js`; the production image contains `frontend/public/config.template.js`. At container startup, `frontend/docker-entrypoint.d/40-generate-runtime-config.sh:1-7` substitutes `API_BASE_URL` to create the delivered `config.js`. This means Docker/Kubernetes can change the API base URL without rebuilding the React bundle.
+3. **Nginx same-origin proxy:** In Compose, `frontend/nginx.conf:19-26` proxies `/api/` to the internal `backend:8000` service. In Kubernetes, the Ingress routes `/api` to the backend Service. The browser only sees `/api`; it never receives PostgreSQL, Redis, or Docker service addresses. `frontend/nginx.conf:8-11` marks `config.js` as `no-store`, so a redeploy cannot leave a browser with stale runtime configuration.
+
+This approach avoids hard-coding production URLs and keeps public runtime configuration separate from secrets. `config.js` may contain a public API path; it must never contain API keys, database passwords, or private provider credentials.
 
 ---
 
 ## Question 3: Component State Management & Error Boundaries (Sami)
 
-*Assigned to Sami — [Docs placeholder]*
+The frontend uses focused React state rather than a global store because each page owns a small, independent slice of server interaction:
+
+1. **Local component state:** `frontend/src/components/SubmitForm.tsx:37-89` owns form values, validation errors, submit progress, API error, and the resulting triage object. It normalizes input and validates the same length boundaries enforced by the backend before calling the API. `frontend/src/pages/DashboardPage.tsx:18-61` owns filters, page offset, fetched complaints, and loading/error state. `frontend/src/pages/StatsPage.tsx:7-47` independently fetches aggregate data and records the `X-Cache` header.
+2. **Typed API boundary:** Enums and response shapes live in `frontend/src/api/types.ts:1-67`; requests and HTTP error translation live in `frontend/src/api/client.ts:11-111`. Components call `civicPulseApi` rather than raw `fetch`, which keeps route strings, query serialization, and 409/429 handling consistent and makes the API calls easy to mock in Vitest.
+3. **State-transition safety:** `frontend/src/api/status.ts:3-10` exposes only the normal forward lifecycle. The Dashboard asks for confirmation before invoking the PATCH request (`frontend/src/pages/DashboardPage.tsx:65-94`) and renders the backend's conflict message if the server rejects a stale or invalid transition.
+4. **Failure containment:** `frontend/src/components/ErrorBoundary.tsx:11-48` catches unhandled render errors outside the route tree and presents a recovery action. Request failures remain page-level alerts, while the error boundary is reserved for unexpected component failures. It is mounted above the router in `frontend/src/main.tsx:8-14`.
+
+The component suite verifies form validation/submission, dashboard rendering, confirmed transitions, cache badge styling, and the error-boundary fallback in `frontend/tests/`.
 
 ---
 
