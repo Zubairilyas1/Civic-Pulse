@@ -51,26 +51,26 @@ export function StatsPage() {
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
-            <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/60 px-3.5 py-1 text-xs font-bold text-emerald-400">
+            <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
             <span>MUNICIPAL METRICS & REDIS CACHE</span>
           </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             System Analytics & Cache Status
           </h1>
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">
             Real-time aggregate totals, complaint category breakdowns, and Redis 30-second TTL cache status indicators.
           </p>
         </div>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 hover:text-slate-900 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#1b3d40] bg-[#081b1c] px-4 py-2.5 text-xs font-bold text-slate-200 shadow-2xs hover:border-emerald-500 hover:text-white disabled:opacity-50"
           disabled={isLoading}
           onClick={() => setRefreshKey((current) => current + 1)}
           type="button"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-emerald-600" : "text-slate-400"}`} />
+          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-emerald-400" : "text-slate-400"}`} />
           {isLoading ? "Refreshing Payload…" : "Refresh Statistics"}
         </motion.button>
       </div>
