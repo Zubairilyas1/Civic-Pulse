@@ -1,5 +1,6 @@
 import { motion, type Variants } from "motion/react";
-import { Inbox, MapPin, ArrowUpRight } from "lucide-react";
+import { Inbox, MapPin, ArrowUpRight, RotateCcw, PlusCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getNextStatus } from "../api/status";
 import type { Complaint } from "../api/types";
 import { StatusBadge } from "./StatusBadge";
@@ -15,17 +16,43 @@ interface DashboardTableProps {
   complaints: Complaint[];
   onAdvanceStatus: (complaint: Complaint) => void;
   updatingComplaintId: string | null;
+  onResetFilters?: () => void;
 }
 
-export function DashboardTable({ complaints, onAdvanceStatus, updatingComplaintId }: DashboardTableProps) {
+export function DashboardTable({ complaints, onAdvanceStatus, updatingComplaintId, onResetFilters }: DashboardTableProps) {
   if (complaints.length === 0) {
     return (
-      <div className="glass-panel rounded-2xl border-dashed p-12 text-center">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400 ring-1 ring-slate-200">
-          <Inbox className="h-6 w-6" />
+      <div className="glass-panel rounded-2xl border-dashed p-10 text-center shadow-xs">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 shadow-2xs">
+          <Inbox className="h-7 w-7" />
         </div>
-        <h2 className="mt-4 text-base font-bold text-slate-900">No Matching Complaints Found</h2>
-        <p className="mt-1.5 text-xs text-slate-500">Try clearing or adjusting your category, priority, or status filters.</p>
+        <h2 className="mt-4 text-base font-extrabold text-slate-900">No Matching Complaints Found</h2>
+        <p className="mt-1.5 text-xs text-slate-600 max-w-md mx-auto font-medium">
+          No records match your active category, priority, status, or keyword search criteria.
+        </p>
+
+        {/* Actionable CTAs inside Empty State */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          {onResetFilters && (
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:border-emerald-500 hover:text-emerald-700"
+              onClick={onResetFilters}
+              type="button"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-emerald-600" />
+              Reset All Filters
+            </motion.button>
+          )}
+          <Link
+            to="/submit"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            Submit New Complaint
+          </Link>
+        </div>
       </div>
     );
   }
