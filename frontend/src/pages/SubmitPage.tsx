@@ -9,6 +9,7 @@ export function SubmitPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
+      className="pt-2 sm:pt-4"
     >
       <div className="mb-8 max-w-3xl">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
