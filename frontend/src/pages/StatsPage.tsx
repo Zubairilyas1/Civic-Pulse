@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { BarChart3, RefreshCw } from "lucide-react";
 import { civicPulseApi } from "../api/client";
 import type { ComplaintStats } from "../api/types";
 import { Alert, LoadingPanel } from "../components/Feedback";
@@ -41,29 +43,46 @@ export function StatsPage() {
   }, [refreshKey]);
 
   return (
-    <section>
+    <motion.section
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-indigo-300">Operational overview</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Statistics</h1>
-          <p className="mt-3 max-w-2xl leading-6 text-slate-300">Monitor complaint volume and see whether the API served this summary from its 30-second cache.</p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300 backdrop-blur-md">
+            <BarChart3 className="h-3.5 w-3.5 text-indigo-400" />
+            <span>MUNICIPAL METRICS & REDIS CACHE</span>
+          </div>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            System Analytics & Cache Status
+          </h1>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-300">
+            Real-time aggregate totals, complaint category breakdowns, and Redis 30-second TTL cache status indicators.
+          </p>
         </div>
-        <button
-          className="rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2.5 text-xs font-bold text-slate-200 backdrop-blur-md hover:border-slate-500 hover:text-white disabled:opacity-50"
           disabled={isLoading}
           onClick={() => setRefreshKey((current) => current + 1)}
           type="button"
         >
-          {isLoading ? "Refreshing…" : "Refresh statistics"}
-        </button>
+          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-indigo-400" : "text-slate-400"}`} />
+          {isLoading ? "Refreshing Payload…" : "Refresh Statistics"}
+        </motion.button>
       </div>
 
       <div className="mt-8">
         {error && <Alert tone="error">{error}</Alert>}
-        <div className={error ? "mt-4" : ""}>
-          {isLoading ? <LoadingPanel label="Loading statistics" /> : stats ? <StatsCards cacheStatus={cacheStatus} stats={stats} /> : null}
-        </div>
+        {isLoading && !stats ? (
+          <LoadingPanel label="Computing real-time analytics" />
+        ) : (
+          stats && <StatsCards cacheStatus={cacheStatus} stats={stats} />
+        )}
       </div>
-    </section>
+    </motion.section>
   );
 }
