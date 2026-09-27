@@ -4,8 +4,8 @@
 
 @layer base {
   html {
-    background-color: #0b1c1d;
-    color-scheme: dark;
+    background-color: #f8fafc;
+    color-scheme: light;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   }
 
@@ -13,51 +13,50 @@
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background-color: #0b1c1d;
+    background-color: #f8fafc;
     background-image: 
-      radial-gradient(rgba(16, 185, 129, 0.12) 1px, transparent 1px),
-      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 40%),
-      radial-gradient(at 0% 100%, rgba(13, 148, 136, 0.08) 0px, transparent 40%);
-    background-size: 24px 24px, 100% 100%, 100% 100%;
+      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 40%),
+      radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.04) 0px, transparent 40%),
+      radial-gradient(at 50% 50%, rgba(241, 245, 249, 0.5) 0px, transparent 50%);
     background-attachment: fixed;
-    color: #f1f5f9;
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom dark scrollbar */
+  /* Custom subtle light scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #071516;
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1e3d40;
+    background: #cbd5e1;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #2a5256;
+    background: #94a3b8;
   }
 }
 
-/* CivicPulse PRO OPERATIONS UI Component Helpers */
+/* Crisp Light SaaS UI Component Helpers */
 .glass-panel {
-  background: rgba(13, 32, 33, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(31, 66, 69, 0.7);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
 }
 
 .glass-card {
-  background: #0b1e1f;
-  border: 1px solid #16383a;
-  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03);
 }
 
 .glass-input {
@@ -70,5 +69,5 @@
 .glass-input:focus {
   background: #ffffff;
   border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
