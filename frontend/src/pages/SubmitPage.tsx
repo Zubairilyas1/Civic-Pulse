@@ -28,15 +28,11 @@ export function SubmitPage() {
     >
       {/* COLUMN 1: Form & Protocol (Width: ~33% / 4 Cols) */}
       <div className="lg:col-span-4 space-y-4">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/60 px-3 py-1 text-xs font-bold text-emerald-400">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-            <span>SERVICE PROTOCOL</span>
-          </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <div className="mb-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Submit a Civic Complaint
           </h1>
-          <p className="mt-2 text-xs leading-relaxed text-slate-300">
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
             Submit municipal details below for client validation and AI engine triage.
           </p>
         </div>
@@ -47,14 +43,14 @@ export function SubmitPage() {
       {/* COLUMN 2: Triage Pipeline Status & Triage Output Engine (Width: ~33% / 4 Cols) */}
       <div className="lg:col-span-4 space-y-6">
         {/* TRIAGE PIPELINE STATUS Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl text-slate-900">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-800">
-              <Activity className="h-4 w-4 text-emerald-600" />
+        <div className="rounded-2xl border border-[#183d40] bg-[#0B1E1F]/90 backdrop-blur-md p-5 shadow-2xl text-slate-100">
+          <div className="flex items-center justify-between border-b border-[#183d40] pb-3">
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+              <Activity className="h-4 w-4 text-emerald-400" />
               Triage Pipeline Status
             </div>
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Live Pipeline
             </span>
           </div>
@@ -62,13 +58,13 @@ export function SubmitPage() {
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-[#183d40] text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                   <th className="py-2 pr-2">Title</th>
                   <th className="py-2 px-2">Location</th>
                   <th className="py-2 pl-2 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-[#163638] font-medium">
                 {complaints.length > 0 ? (
                   complaints.slice(0, 6).map((item, idx) => {
                     const statusConfig = 
@@ -79,11 +75,11 @@ export function SubmitPage() {
                         : { text: "Awaiting Dispatch", style: "bg-sky-600 text-white font-bold" };
 
                     return (
-                      <tr key={item.id || idx} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-800" title={item.title}>
+                      <tr key={item.id || idx} className="hover:bg-[#0e2729] transition-colors">
+                        <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-100" title={item.title}>
                           {item.title}
                         </td>
-                        <td className="py-2.5 px-2 max-w-[100px] truncate text-slate-500" title={item.location}>
+                        <td className="py-2.5 px-2 max-w-[100px] truncate text-slate-400" title={item.location}>
                           {item.location}
                         </td>
                         <td className="py-2.5 pl-2 text-right">
@@ -97,18 +93,18 @@ export function SubmitPage() {
                   })
                 ) : (
                   <>
-                    <tr className="hover:bg-slate-50">
-                      <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-800">Water main pipeline leaking near market</td>
-                      <td className="py-2.5 px-2 text-slate-500">Street 14, Sector...</td>
+                    <tr className="hover:bg-[#0e2729]">
+                      <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-100">Water main pipeline leaking near market</td>
+                      <td className="py-2.5 px-2 text-slate-400">Street 14, Sector...</td>
                       <td className="py-2.5 pl-2 text-right">
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] text-white font-bold">
                           Triage Complete <ChevronRight className="h-3 w-3 opacity-70" />
                         </span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-slate-50">
-                      <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-800">Water main pipeline near sector market</td>
-                      <td className="py-2.5 px-2 text-slate-500">Sector G-10/2</td>
+                    <tr className="hover:bg-[#0e2729]">
+                      <td className="py-2.5 pr-2 max-w-[120px] truncate font-semibold text-slate-100">Water main pipeline near sector market</td>
+                      <td className="py-2.5 px-2 text-slate-400">Sector G-10/2</td>
                       <td className="py-2.5 pl-2 text-right">
                         <span className="inline-flex items-center gap-1 rounded-full bg-sky-600 px-2 py-0.5 text-[10px] text-white font-bold">
                           Awaiting Dispatch <ChevronRight className="h-3 w-3 opacity-70" />
