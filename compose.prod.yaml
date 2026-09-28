@@ -33,7 +33,7 @@ services:
       retries: 5
 
   backend:
-    image: ${IMAGE_TAG:-ghcr.io/zubairilyas1/civicpulse-backend:latest}
+    image: ${IMAGE_TAG:-ghcr.io/zubairilyas1/civicpulse-backend:v1.0.0}
     container_name: civicpulse-backend-prod
     restart: always
     environment:
@@ -51,7 +51,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: ${FRONTEND_IMAGE_TAG:-ghcr.io/zubairilyas1/civicpulse-frontend:latest}
+    image: ${FRONTEND_IMAGE_TAG:-ghcr.io/zubairilyas1/civicpulse-frontend:v1.0.0}
     container_name: civicpulse-frontend-prod
     restart: always
     ports:

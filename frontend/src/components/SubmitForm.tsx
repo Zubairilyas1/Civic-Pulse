@@ -36,12 +36,36 @@ function messageFor(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to submit the complaint. Please try again.";
 }
 
+function detectDraftCategory(title: string, description: string): { label: string; tone: string } {
+  const combined = `${title} ${description}`.toLowerCase();
+  if (/\b(water|leak|pipeline|drain|sewage|tap|overflow)\b/.test(combined)) {
+    return { label: "WATER", tone: "bg-cyan-50 text-cyan-700 border-cyan-200" };
+  }
+  if (/\b(road|pothole|street|asphalt|traffic|footpath|sidewalk)\b/.test(combined)) {
+    return { label: "ROADS", tone: "bg-amber-50 text-amber-700 border-amber-200" };
+  }
+  if (/\b(power|electricity|wire|cable|transformer|outage|blackout|spark)\b/.test(combined)) {
+    return { label: "ELECTRICITY", tone: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+  }
+  if (/\b(garbage|trash|waste|dump|litter|bin)\b/.test(combined)) {
+    return { label: "WASTE", tone: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  }
+  if (/\b(sanitation|sewer|stink|smell|filth|mosquito|contamination)\b/.test(combined)) {
+    return { label: "SANITATION", tone: "bg-rose-50 text-rose-700 border-rose-200" };
+  }
+  return { label: "OTHER", tone: "bg-slate-100 text-slate-700 border-slate-200" };
+}
+
 export function SubmitForm() {
   const [values, setValues] = useState<ComplaintCreateInput>(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [createdComplaint, setCreatedComplaint] = useState<Complaint | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasDraftContent = values.title.trim().length > 0 || values.description.trim().length > 0 || values.location.trim().length > 0;
+  const draftCategory = detectDraftCategory(values.title, values.description);
+  const isFormValid = values.title.trim().length >= 5 && values.description.trim().length >= 10 && values.location.trim().length >= 3;
 
   function updateField(field: keyof ComplaintCreateInput, value: string): void {
     setValues((current) => ({ ...current, [field]: value }));
