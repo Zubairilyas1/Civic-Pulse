@@ -19,7 +19,8 @@ class LLMTriage(BaseTriageProvider):
     """Groq Cloud LLM Triage provider with guardrails, caching, jitter retries, and fallback."""
 
     GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-    MODEL = "llama3-70b-8192"
+    MODEL = "llama-3.3-70b-versatile"
+    FALLBACK_MODEL = "llama-3.1-8b-instant"
 
     def __init__(self, fallback_provider: BaseTriageProvider | None = None):
         self.fallback_provider = fallback_provider or RuleBasedTriage()
@@ -33,7 +34,9 @@ class LLMTriage(BaseTriageProvider):
             "Analyze the complaint title and description and output valid JSON ONLY with keys: "
             "'category' (one of: WATER, ROADS, ELECTRICITY, WASTE, SANITATION, OTHER), "
             "'priority' (one of: LOW, MEDIUM, HIGH, CRITICAL), "
-            "and 'summary' (brief 1-2 sentence executive summary)."
+            "and 'summary' (brief 1-2 sentence executive summary). "
+            "If the complaint text is generic, personal, or does not describe a municipal infrastructure issue, "
+            "classify category as OTHER and priority as LOW."
         )
 
         user_content = f"Title: {title}\nDescription: {description}"
@@ -43,20 +46,20 @@ class LLMTriage(BaseTriageProvider):
             "Content-Type": "application/json",
         }
 
-        payload = {
-            "model": self.MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.1,
-            "max_tokens": 300,
-        }
-
         # 10 second timeout & 1 jittered retry on failure/rate-limit
         async with httpx.AsyncClient(timeout=10.0) as client:
-            for attempt in range(2):
+            models_to_try = [self.MODEL, self.FALLBACK_MODEL]
+            for attempt, model_name in enumerate(models_to_try):
+                payload = {
+                    "model": model_name,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_content},
+                    ],
+                    "response_format": {"type": "json_object"},
+                    "temperature": 0.1,
+                    "max_tokens": 300,
+                }
                 try:
                     response = await client.post(self.GROQ_URL, headers=headers, json=payload)
                     if response.status_code == 200:
@@ -64,7 +67,7 @@ class LLMTriage(BaseTriageProvider):
                         content = json.loads(data["choices"][0]["message"]["content"])
 
                         category = CategoryEnum(content.get("category", "OTHER").upper())
-                        priority = PriorityEnum(content.get("priority", "MEDIUM").upper())
+                        priority = PriorityEnum(content.get("priority", "LOW").upper())
                         summary = content.get("summary", "LLM triage complete.")
 
                         return TriageResult(
@@ -75,10 +78,10 @@ class LLMTriage(BaseTriageProvider):
                             confidence_score=0.95,
                         )
 
-                    logger.warning(f"Groq API returned HTTP status {response.status_code}")
+                    logger.warning(f"Groq API model {model_name} returned HTTP status {response.status_code}")
 
                 except (httpx.TimeoutException, httpx.RequestError) as exc:
-                    logger.warning(f"Groq API attempt {attempt + 1} failed: {str(exc)}")
+                    logger.warning(f"Groq API model {model_name} attempt {attempt + 1} failed: {str(exc)}")
 
                 # Jitter retry delay
                 if attempt == 0:
