@@ -30,23 +30,30 @@ export function AppShell({ children }: PropsWithChildren) {
             </div>
           </NavLink>
 
-          {/* Top Bar Navigation & Actions */}
+          {/* Top Bar Navigation Tabs & Status */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Primary Action Button */}
-            <NavLink
-              to="/submit"
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
-                location.pathname === "/submit" || location.pathname === "/"
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25 ring-1 ring-emerald-500"
-                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 ring-1 ring-emerald-200"
-              }`}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Submit Complaint</span>
-            </NavLink>
+            <nav aria-label="Main navigation" className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/80 p-1 backdrop-blur-md shadow-2xs">
+              <NavLink
+                to="/submit"
+                className={`relative flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  location.pathname === "/submit" || location.pathname === "/"
+                    ? "text-slate-900 font-extrabold"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {(location.pathname === "/submit" || location.pathname === "/") && (
+                  <motion.div
+                    layoutId="activeNavTab"
+                    className="absolute inset-0 rounded-full bg-white shadow-sm ring-1 ring-slate-200/80"
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <PlusCircle className={`h-3.5 w-3.5 ${(location.pathname === "/submit" || location.pathname === "/") ? "text-emerald-600 font-bold" : "text-slate-400"}`} />
+                  Submit Complaint
+                </span>
+              </NavLink>
 
-            {/* Secondary Destinations Segmented Pill Container */}
-            <nav aria-label="Secondary navigation" className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-100/80 p-1 backdrop-blur-md shadow-2xs">
               <NavLink
                 to="/dashboard"
                 className={`relative flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
@@ -100,7 +107,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 pt-4 pb-8 sm:px-6">
         {children}
       </main>
     </div>
