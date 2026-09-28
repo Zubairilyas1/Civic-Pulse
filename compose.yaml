@@ -54,7 +54,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/civicpulse
       REDIS_URL: redis://redis:6379/0
-      TRIAGE_PROVIDER: simulated
+      TRIAGE_PROVIDER: ${TRIAGE_PROVIDER:-groq}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
       OLLAMA_HOST: http://ollama:11434
     ports:
       - "8000:8000"
