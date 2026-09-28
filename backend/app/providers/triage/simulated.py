@@ -17,15 +17,20 @@ class SimulatedTriage(BaseTriageProvider):
         if self.force_failure:
             raise RuntimeError("SimulatedTriage configured failure triggered.")
 
-        # Hash combined text to generate deterministic index
-        text_hash = int(hashlib.md5(f"{title}{description}".encode()).hexdigest(), 16)
+        combined = f"{title} {description}".lower()
+        municipal_keywords = ["water", "leak", "road", "pothole", "power", "wire", "garbage", "trash", "sanitation", "sewer", "drain", "pipe", "light", "outage"]
 
-        category = self._CATEGORIES[text_hash % len(self._CATEGORIES)]
-        priority = self._PRIORITIES[(text_hash >> 2) % len(self._PRIORITIES)]
-
-        summary = (
-            f"Simulated triage assigned category '{category.value}' and priority '{priority.value}' based on hash seed."
-        )
+        # Default non-infrastructure or generic text to OTHER and LOW
+        if not any(kw in combined for kw in municipal_keywords):
+            category = CategoryEnum.OTHER
+            priority = PriorityEnum.LOW
+            summary = "Simulated triage categorized generic report as 'OTHER' with 'LOW' priority."
+        else:
+            # Hash combined text to generate deterministic index for keyword-matching infrastructure complaints
+            text_hash = int(hashlib.md5(f"{title}{description}".encode()).hexdigest(), 16)
+            category = self._CATEGORIES[text_hash % len(self._CATEGORIES)]
+            priority = self._PRIORITIES[(text_hash >> 2) % len(self._PRIORITIES)]
+            summary = f"Simulated triage assigned category '{category.value}' and priority '{priority.value}' based on hash seed."
 
         return TriageResult(
             category=category,
