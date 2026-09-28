@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { BarChart3, RefreshCw, Activity } from "lucide-react";
 import { civicPulseApi } from "../api/client";
 import type { ComplaintStats } from "../api/types";
 import { Alert, LoadingPanel } from "../components/Feedback";
@@ -41,29 +43,52 @@ export function StatsPage() {
   }, [refreshKey]);
 
   return (
-    <section>
+    <motion.section
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-indigo-300">Operational overview</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Statistics</h1>
-          <p className="mt-3 max-w-2xl leading-6 text-slate-300">Monitor complaint volume and see whether the API served this summary from its 30-second cache.</p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
+            <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
+            <span>OPERATIONS & PERFORMANCE ANALYTICS</span>
+          </div>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            System Analytics & Metrics
+          </h1>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
+            Real-time aggregate totals, complaint category breakdowns, and Redis 30-second TTL cache performance indicators.
+          </p>
         </div>
-        <button
-          className="rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          disabled={isLoading}
-          onClick={() => setRefreshKey((current) => current + 1)}
-          type="button"
-        >
-          {isLoading ? "Refreshing…" : "Refresh statistics"}
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs">
+            <Activity className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+            <span>Auto-Sync Active</span>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 hover:text-slate-900 disabled:opacity-50"
+            disabled={isLoading}
+            onClick={() => setRefreshKey((current) => current + 1)}
+            type="button"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-emerald-600" : "text-slate-400"}`} />
+            {isLoading ? "Refreshing Payload…" : "Refresh Statistics"}
+          </motion.button>
+        </div>
       </div>
 
       <div className="mt-8">
         {error && <Alert tone="error">{error}</Alert>}
-        <div className={error ? "mt-4" : ""}>
-          {isLoading ? <LoadingPanel label="Loading statistics" /> : stats ? <StatsCards cacheStatus={cacheStatus} stats={stats} /> : null}
-        </div>
+        {isLoading && !stats ? (
+          <LoadingPanel label="Computing real-time analytics" />
+        ) : (
+          stats && <StatsCards cacheStatus={cacheStatus} stats={stats} />
+        )}
       </div>
-    </section>
+    </motion.section>
   );
 }

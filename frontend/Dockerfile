@@ -17,7 +17,7 @@ COPY --from=builder /app/public/config.template.js /usr/share/nginx/html/config.
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.d/40-generate-runtime-config.sh /docker-entrypoint.d/40-generate-runtime-config.sh
 
-RUN chmod +x /docker-entrypoint.d/40-generate-runtime-config.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.d/40-generate-runtime-config.sh && chmod +x /docker-entrypoint.d/40-generate-runtime-config.sh
 
 EXPOSE 80
 
