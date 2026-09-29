@@ -17,6 +17,7 @@ interface FilterState {
   status: "" | ComplaintStatus;
 }
 
+// Empty filter values represent an unfiltered complaint list.
 const initialFilters: FilterState = { searchQuery: "", category: "", priority: "", status: "" };
 
 export function DashboardPage() {
