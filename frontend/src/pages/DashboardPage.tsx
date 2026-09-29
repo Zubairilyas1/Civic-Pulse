@@ -171,7 +171,7 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-4">
-          {/* Free-Text Search Bar */}
+          {/* Search the currently loaded complaints. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-search">
               Keyword Search
