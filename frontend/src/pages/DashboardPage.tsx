@@ -112,7 +112,7 @@ export function DashboardPage() {
     }
   }
 
-  // Client-side text search filtering
+  // Search only the complaints returned for the current page.
   const filteredComplaints = complaints.filter((item) => {
     if (!filters.searchQuery.trim()) return true;
     const query = filters.searchQuery.toLowerCase();
