@@ -40,6 +40,7 @@ export function DashboardPage() {
 
     void civicPulseApi
       .listComplaints({
+        // Omit empty dropdown filters from the API request.
         category: filters.category || undefined,
         priority: filters.priority || undefined,
         status: filters.status || undefined,
