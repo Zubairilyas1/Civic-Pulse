@@ -124,6 +124,7 @@ export function DashboardPage() {
     );
   });
 
+  // Show the reset action whenever a search or dropdown filter is active.
   const isFiltered = Boolean(filters.searchQuery || filters.category || filters.priority || filters.status);
 
   return (
