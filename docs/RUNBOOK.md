@@ -75,29 +75,29 @@ The Groq and Ollama providers already fall back to rule-based triage when their 
 
 ## 5. Rate Limits, Cached Statistics and Metrics
 
-- A `429 Too Many Requests` response includes `Retry-After`. The frontend should wait for that period rather than repeatedly retrying. `/health` and `/ready` are exempt so probes never consume budget.
+- A `429 Too Many Requests` response includes `Retry-After`. The frontend should wait for that period rather than repeatedly retrying. The counter lives in Redis (`ratelimit:<ip>:<window>`), so all backend replicas share one budget; `/health` and `/ready` (and their `/api` copies) are exempt so probes never consume budget. If Redis is down the limiter fails open with a WARNING instead of blocking traffic.
 - `/api/stats` is cached for 30 seconds. A complaint create or status update invalidates the stats cache, so the next request should be a cache miss.
 - If statistics are unexpectedly stale, verify the backend write succeeded before clearing Redis. Cache clearing is an operational exception, not the first response.
-- `GET /metrics` (also under `/api`) exposes `http_requests_total`, `http_request_duration_seconds`, `triage_duration_seconds` and `triage_fallbacks_total`. Route labels use path templates (`/complaints/{complaint_id}`), so cardinality stays bounded. Scrape it from Prometheus on the backend Service port `8000`.
+- `GET /metrics` (also under `/api`) exposes `http_requests_total`, `http_request_duration_seconds`, `triage_duration_seconds`, `triage_fallbacks_total` and `triage_cache_lookups_total{result="hit"|"miss"}` (the triage cache hit rate). Route labels use path templates (`/complaints/{complaint_id}`), so cardinality stays bounded. Scrape it from Prometheus on the backend Service port `8000`.
 
 ## 6. Kubernetes Deployment and Rollback
 
-Build the desired overlay before applying it:
+Build the desired overlay before applying it (the dev overlay deploys into the `civicpulse-dev` namespace, prod into `civicpulse-prod`):
 
 ```bash
-kustomize build k8s/overlays/dev
+kubectl kustomize k8s/overlays/dev
 kubectl apply -k k8s/overlays/dev
-kubectl rollout status deployment/backend -n civicpulse
-kubectl rollout status deployment/frontend -n civicpulse
+kubectl rollout status deployment/backend -n civicpulse-dev
+kubectl rollout status deployment/frontend -n civicpulse-dev
 ```
 
-Production deployments must use an immutable image SHA. After a failed rollout:
+Production deployments must use an immutable image SHA (the `deploy-k8s` CD job rewrites the prod overlay's `newTag` to `$GITHUB_SHA` before applying). After a failed rollout:
 
 ```bash
-kubectl rollout undo deployment/backend -n civicpulse
-kubectl rollout undo deployment/frontend -n civicpulse
-kubectl rollout status deployment/backend -n civicpulse
-kubectl rollout status deployment/frontend -n civicpulse
+kubectl rollout undo deployment/backend -n civicpulse-prod
+kubectl rollout undo deployment/frontend -n civicpulse-prod
+kubectl rollout status deployment/backend -n civicpulse-prod
+kubectl rollout status deployment/frontend -n civicpulse-prod
 ```
 
 Confirm health endpoints and a browser smoke test after rollback. Do not automatically downgrade database schema for an application-only rollback; forward-compatible migrations are required.
@@ -105,8 +105,8 @@ Confirm health endpoints and a browser smoke test after rollback. Do not automat
 The frontend deployment has a readiness probe on `/` and uses a rolling-update policy of `maxUnavailable: 0` and `maxSurge: 1`. During a frontend update, confirm it keeps serving capacity:
 
 ```bash
-kubectl rollout status deployment/frontend -n civicpulse
-kubectl get pods -n civicpulse -l app=frontend
+kubectl rollout status deployment/frontend -n civicpulse-prod
+kubectl get pods -n civicpulse-prod -l app=frontend
 ```
 
 ## 7. Creating a Release

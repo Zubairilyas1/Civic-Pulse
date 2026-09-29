@@ -55,6 +55,14 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          startupProbe:
+            # Slow cold starts (image pull, migration init, Redis warm-up) must not
+            # race liveness: kubelet allows 30 x 2s = 60s before liveness starts.
+            httpGet:
+              path: /api/health
+              port: 8000
+            periodSeconds: 2
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /api/health

@@ -6,6 +6,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  # Bind to ingress-nginx specifically: without a class, whichever controller
+  # happens to run in a cluster (Traefik in k3s, nginx, ...) would claim it.
+  ingressClassName: nginx
   rules:
     - http:
         paths:

@@ -10,6 +10,9 @@ services:
       POSTGRES_DB: civicpulse
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # WHY a volume: complaint rows are the system of record (§2.1 persists
+      # triage output); without it every `down` would erase the database and
+      # `up` would boot an empty city. Only `down -v` intentionally wipes it.
     networks:
       - internal
     # NOTE: no published port, on purpose. The spec requires db/cache on `internal` only,
@@ -27,8 +30,15 @@ services:
     image: redis:7-alpine
     container_name: civicpulse-redis
     restart: unless-stopped
+    # AOF (appendonly) on purpose: Redis is now more than a cache — the §2.4
+    # rate-limiter counter and the stats cache live here, and an AOF replay on
+    # restart means a reboot does not silently reset the 60-requests/minute
+    # budget. The cost (one fsync per write window) is negligible at this scale.
     command: redis-server --appendonly yes
     volumes:
+      # Named volume so AOF/RDB files survive `docker compose down` (they are
+      # wiped only with `down -v`). Loss window without it: the rate-limit
+      # budget and cached stats reset on every container recreation.
       - redis_data:/data
     networks:
       - internal
@@ -45,6 +55,8 @@ services:
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
+      # WHY a volume: model weights (several GB) are pulled once and reused;
+      # a fresh container must not re-download them on every restart.
     networks:
       - internal
 
@@ -65,6 +77,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # Data seed (one-shot, MANUAL — never part of `docker compose up`): loads the 32
+  # canonical demo complaints. Fresh environments and CI stay empty on purpose so
+  # tests never depend on seed rows; run it explicitly with:
+  #   docker compose run --rm seed
+  # The `tools` profile keeps it out of `docker compose up` (compose enables a
+  # service's profile automatically when you `run` that service directly).
+  # Idempotent by title: a second run inserts 0 rows and leaves the same 32.
+  seed:
+    profiles: ["tools"]
+    image: no1-backend:dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["python", "/scripts/seed.py"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/civicpulse
+    volumes:
+      - ./scripts:/scripts:ro
+    restart: "no"
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   # Backend API Service (FastAPI)
   backend:

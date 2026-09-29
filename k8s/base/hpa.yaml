@@ -17,3 +17,20 @@ spec:
         target:
           type: Utilization
           averageUtilization: 60
+  behavior:
+    # Scale up the moment CPU crosses the target; never make a hot pod wait.
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    # Scale down slowly: the 5-minute window absorbs traffic spikes so replicas
+    # are not churned the instant a burst ends (each cold pod pays image pull +
+    # migration init). HPA still needs metrics-server for CPU metrics to flow.
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120

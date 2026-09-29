@@ -8,8 +8,8 @@ resources:
 
 # DEPLOY BY IMMUTABLE REFERENCE: the committed tag below is a placeholder that does not exist,
 # so a bare `kubectl apply -k` fails loudly instead of silently deploying a mutable tag.
-# CI (cd.yml deploy job) and scripts/set-image.sh overwrite it with the commit SHA:
-#   kustomize edit set image backend=ghcr.io/zubairilyas1/civicpulse-backend:<sha>
+# CI (cd.yml deploy-k8s job) rewrites it with the commit SHA before applying:
+#   sed -i "s/newTag: .*/newTag: $GITHUB_SHA/" k8s/overlays/prod/kustomization.yaml
 images:
   - name: ghcr.io/zubairilyas1/civicpulse-backend
     newName: ghcr.io/zubairilyas1/civicpulse-backend
