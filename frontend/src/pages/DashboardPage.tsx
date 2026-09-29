@@ -94,6 +94,7 @@ export function DashboardPage() {
       return;
     }
 
+    // Track the active update so the UI can disable repeated actions.
     setUpdatingComplaintId(pendingTransition.id);
     setError(null);
     setTransitionMessage(null);
