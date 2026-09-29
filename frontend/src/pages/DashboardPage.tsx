@@ -70,6 +70,7 @@ export function DashboardPage() {
     };
   }, [filters.category, filters.priority, filters.status, page]);
 
+  // Restart pagination when any filter changes.
   function setFilter<K extends keyof FilterState>(key: K, value: FilterState[K]): void {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
