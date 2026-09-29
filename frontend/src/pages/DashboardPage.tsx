@@ -259,7 +259,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Pagination Controls - Hidden when 0 records match */}
+      {/* Show pagination while the current search has visible results. */}
       {filteredComplaints.length > 0 && (
         <nav aria-label="Complaint pages" className="mt-6 flex items-center justify-between gap-4">
           <motion.button
