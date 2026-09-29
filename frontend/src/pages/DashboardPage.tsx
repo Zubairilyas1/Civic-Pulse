@@ -7,6 +7,7 @@ import { CATEGORIES, PRIORITIES, STATUSES, type Category, type Complaint, type C
 import { DashboardTable } from "../components/DashboardTable";
 import { Alert, LoadingPanel } from "../components/Feedback";
 
+// Use the same page size for API requests and pagination calculations.
 const PAGE_SIZE = 10;
 
 interface FilterState {
