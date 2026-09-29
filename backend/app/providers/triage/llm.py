@@ -16,11 +16,18 @@ logger = logging.getLogger("civicpulse.llm_triage")
 
 
 class LLMTriage(BaseTriageProvider):
-    """Groq Cloud LLM Triage provider with guardrails, caching, jitter retries, and fallback."""
+    """Groq Cloud LLM Triage provider with guardrails, caching, and contract retry policy.
+
+    Retry contract (locked decision): a 10 s wall-clock budget wraps the whole call,
+    exactly one retry — and only for 429 or 5xx — and 4xx responses are never
+    retried. Every failure path falls through to RuleBasedTriage with
+    `triaged_by = rules:fallback` and one WARNING log line.
+    """
 
     GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
     MODEL = "llama-3.3-70b-versatile"
-    FALLBACK_MODEL = "llama-3.1-8b-instant"
+    BUDGET_SECONDS = 10.0
+    RETRY_DELAY_RANGE = (0.5, 0.8)
 
     def __init__(self, fallback_provider: BaseTriageProvider | None = None):
         self.fallback_provider = fallback_provider or RuleBasedTriage()
@@ -32,62 +39,85 @@ class LLMTriage(BaseTriageProvider):
         system_prompt = (
             "You are an AI Civic Complaint Triage System for municipal government. "
             "Analyze the complaint title and description and output valid JSON ONLY with keys: "
-            "'category' (one of: WATER, ROADS, ELECTRICITY, WASTE, SANITATION, OTHER), "
-            "'priority' (one of: LOW, MEDIUM, HIGH, CRITICAL), "
-            "and 'summary' (brief 1-2 sentence executive summary). "
+            "'category' (one of: water, roads, electricity, streetlights, sanitation, other), "
+            "'priority' (one of: high, normal, low), "
+            "and 'summary' (brief 1-2 sentence executive summary, max 140 chars, single line). "
             "If the complaint text is generic, personal, or does not describe a municipal infrastructure issue, "
-            "classify category as OTHER and priority as LOW."
+            "classify category as other and priority as low."
         )
-
         user_content = f"Title: {title}\nDescription: {description}"
-
         headers = {
             "Authorization": f"Bearer {settings.GROQ_API_KEY}",
             "Content-Type": "application/json",
         }
+        payload = {
+            "model": self.MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+            "max_tokens": 300,
+        }
 
-        # 10 second timeout & 1 jittered retry on failure/rate-limit
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            models_to_try = [self.MODEL, self.FALLBACK_MODEL]
-            for attempt, model_name in enumerate(models_to_try):
-                payload = {
-                    "model": model_name,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
-                    "response_format": {"type": "json_object"},
-                    "temperature": 0.1,
-                    "max_tokens": 300,
-                }
+        # Wall-clock budget: the retry policy must never stall complaint intake.
+        try:
+            async with asyncio.timeout(self.BUDGET_SECONDS):
+                return await self._post_with_contract_retry(payload, headers)
+        except TimeoutError:
+            raise RuntimeError(f"Groq triage exceeded the {self.BUDGET_SECONDS:.0f}s wall-clock budget.")
+
+    async def _post_with_contract_retry(
+        self,
+        payload: dict[str, object],
+        headers: dict[str, str],
+    ) -> TriageResult:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            for attempt in range(2):
                 try:
                     response = await client.post(self.GROQ_URL, headers=headers, json=payload)
-                    if response.status_code == 200:
-                        data = response.json()
-                        content = json.loads(data["choices"][0]["message"]["content"])
-
-                        category = CategoryEnum(content.get("category", "OTHER").upper())
-                        priority = PriorityEnum(content.get("priority", "LOW").upper())
-                        summary = content.get("summary", "LLM triage complete.")
-
-                        return TriageResult(
-                            category=category,
-                            priority=priority,
-                            summary=summary,
-                            triaged_by="groq_llama3",
-                            confidence_score=0.95,
-                        )
-
-                    logger.warning(f"Groq API model {model_name} returned HTTP status {response.status_code}")
-
                 except (httpx.TimeoutException, httpx.RequestError) as exc:
-                    logger.warning(f"Groq API model {model_name} attempt {attempt + 1} failed: {str(exc)}")
+                    # Transport failures are not retried: the wall-clock budget would
+                    # be spent waiting instead of triaging, and rules fallback is cheap.
+                    raise RuntimeError(f"Groq request failed: {exc}") from exc
 
-                # Jitter retry delay
-                if attempt == 0:
-                    await asyncio.sleep(0.5 + random.uniform(0.1, 0.3))
+                if response.status_code == 200:
+                    data = response.json()
+                    content = json.loads(data["choices"][0]["message"]["content"])
 
-            raise RuntimeError("Groq LLM API requests failed after retries.")
+                    # Any value outside the contract enum raises ValueError and
+                    # falls through to RuleBasedTriage — model output is never trusted.
+                    category = CategoryEnum(str(content.get("category", "other")).lower())
+                    priority = PriorityEnum(str(content.get("priority", "low")).lower())
+                    summary = content.get("summary", "LLM triage complete.")
+
+                    return TriageResult(
+                        category=category,
+                        priority=priority,
+                        summary=summary,
+                        triaged_by="llm:groq",
+                        confidence_score=0.95,
+                    )
+
+                if response.status_code == 429 or response.status_code >= 500:
+                    if attempt == 0:
+                        low, high = self.RETRY_DELAY_RANGE
+                        logger.warning(
+                            f"Groq API returned HTTP {response.status_code}; retrying once after a jitter delay."
+                        )
+                        await asyncio.sleep(low + random.uniform(0.0, high - low))
+                        continue
+                    raise RuntimeError(
+                        f"Groq API still failing after one retry: HTTP {response.status_code}."
+                    )
+
+                # Contract: 4xx is never retried.
+                raise RuntimeError(
+                    f"Groq API returned HTTP {response.status_code}; 4xx responses are never retried."
+                )
+
+        raise RuntimeError("Groq triage ended without a response.")
 
     async def triage(self, title: str, description: str) -> TriageResult:
         # Step 1: Prompt Guardrail Sanitization
@@ -110,6 +140,14 @@ class LLMTriage(BaseTriageProvider):
             TriageCache.set(clean_title, clean_desc, result)
             return result
         except Exception as exc:
-            logger.warning(f"LLMTriage falling back to RuleBasedTriage: {str(exc)}")
+            # The contract's single WARNING (complaint id, provider, error class)
+            # is emitted by ComplaintService after persist, where the id exists.
+            logger.info(f"LLMTriage falling back to rules: {type(exc).__name__}: {exc}")
             fallback_result = await self.fallback_provider.triage(clean_title, clean_desc)
-            return fallback_result
+            # Contract §2.3: LLM failures surface as triaged_by = rules:fallback.
+            return fallback_result.model_copy(
+                update={
+                    "triaged_by": "rules:fallback",
+                    "fallback_reason": f"{type(exc).__name__}: {exc}",
+                }
+            )

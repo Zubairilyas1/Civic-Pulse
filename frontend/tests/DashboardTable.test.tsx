@@ -12,7 +12,7 @@ describe("DashboardTable", () => {
     expect(screen.getByText(complaintFixture.location)).toBeInTheDocument();
     expect(screen.getByText("WATER")).toBeInTheDocument();
     expect(screen.getByText("HIGH")).toBeInTheDocument();
-    expect(screen.getByText("TRIAGED")).toBeInTheDocument();
+    expect(screen.getByText("OPEN")).toBeInTheDocument();
   });
 
   it("requests an advance action for a non-terminal complaint", async () => {

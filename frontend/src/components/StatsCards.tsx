@@ -42,7 +42,7 @@ function Breakdown({ title, values, total, colorGradient }: { title: string; val
             return (
               <div key={label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <dt className="font-bold text-slate-700">{label.replace(/_/g, " ")}</dt>
+                  <dt className="font-bold text-slate-700">{label.replace(/_/g, " ").toUpperCase()}</dt>
                   <dd className="font-mono text-slate-900 font-extrabold">{count} <span className="text-slate-400 text-[10px]">({percentage}%)</span></dd>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 p-0.5 border border-slate-200/80">
@@ -67,11 +67,12 @@ function Breakdown({ title, values, total, colorGradient }: { title: string; val
 }
 
 export function StatsCards({ stats, cacheStatus }: { stats: ComplaintStats; cacheStatus: string | null }) {
-  const openComplaints = ["SUBMITTED", "TRIAGED", "IN_PROGRESS"].reduce(
+  // Non-terminal statuses per the contract state machine: open and in_progress.
+  const openComplaints = ["open", "in_progress"].reduce(
     (total, status) => total + (stats.by_status[status] || 0),
     0,
   );
-  const resolvedComplaints = stats.by_status.RESOLVED || 0;
+  const resolvedComplaints = stats.by_status.resolved || 0;
   const normalizedCacheStatus = cacheStatus === "HIT" || cacheStatus === "MISS" ? cacheStatus : null;
 
   return (

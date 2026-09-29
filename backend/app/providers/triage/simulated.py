@@ -36,6 +36,6 @@ class SimulatedTriage(BaseTriageProvider):
             category=category,
             priority=priority,
             summary=summary,
-            triaged_by="simulated_v1",
+            triaged_by="simulated",
             confidence_score=0.99,
         )

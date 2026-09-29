@@ -12,12 +12,16 @@ class InvalidStateTransitionException(Exception):
 
 
 class ComplaintStateMachine:
-    """State machine enforcing valid lifecycle transitions for civic complaints."""
+    """State machine enforcing valid lifecycle transitions for civic complaints.
+
+    The contract's transition table (§2.2): open → in_progress → resolved;
+    open → rejected; in_progress → rejected. resolved and rejected are terminal.
+    Anything else — including a no-op patch to the current status — is a 409.
+    """
 
     # Allowed transitions map
     _ALLOWED_TRANSITIONS: dict[StatusEnum, set[StatusEnum]] = {
-        StatusEnum.SUBMITTED: {StatusEnum.TRIAGED, StatusEnum.REJECTED},
-        StatusEnum.TRIAGED: {StatusEnum.IN_PROGRESS, StatusEnum.REJECTED},
+        StatusEnum.OPEN: {StatusEnum.IN_PROGRESS, StatusEnum.REJECTED},
         StatusEnum.IN_PROGRESS: {StatusEnum.RESOLVED, StatusEnum.REJECTED},
         StatusEnum.RESOLVED: set(),  # Terminal state
         StatusEnum.REJECTED: set(),  # Terminal state
@@ -27,11 +31,9 @@ class ComplaintStateMachine:
     def validate_transition(cls, current_status: StatusEnum, target_status: StatusEnum) -> None:
         """Validate if transition from current_status to target_status is allowed.
 
-        Raises InvalidStateTransitionException if transition is forbidden.
+        Raises InvalidStateTransitionException if transition is forbidden —
+        including same-to-same, which is not in the contract's table.
         """
-        if current_status == target_status:
-            return  # No-op transition is allowed
-
         allowed = cls._ALLOWED_TRANSITIONS.get(current_status, set())
         if target_status not in allowed:
             raise InvalidStateTransitionException(current_status, target_status)

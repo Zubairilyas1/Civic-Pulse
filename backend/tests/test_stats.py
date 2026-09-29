@@ -1,11 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
-
-
-def test_get_stats_endpoint():
+def test_get_stats_endpoint(client):
     response = client.get("/api/stats")
     assert response.status_code == 200
     data = response.json()
@@ -15,7 +8,7 @@ def test_get_stats_endpoint():
     assert "by_priority" in data
 
 
-def test_get_meta_providers_endpoint():
+def test_get_meta_providers_endpoint(client):
     response = client.get("/api/meta/providers")
     assert response.status_code == 200
     data = response.json()
@@ -30,7 +23,7 @@ def test_get_meta_providers_endpoint():
     assert "ollama" in provider_names
 
 
-def test_x_request_id_header_injected():
+def test_x_request_id_header_injected(client):
     response = client.get("/api/health")
     assert response.status_code == 200
     assert "X-Request-ID" in response.headers

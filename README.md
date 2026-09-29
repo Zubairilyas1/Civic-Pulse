@@ -67,6 +67,21 @@ npm test
 
 The frontend loads a public runtime `/config.js` and defaults to `/api`. Its production container generates that file from `API_BASE_URL` at startup, so an image can be built once and deployed to multiple environments.
 
+### Backend development and verification
+
+The database and cache deliberately join an internal-only Docker network (no host port), so the test suite runs **inside** the stack — a real Postgres (`civicpulse_test`) and Redis (DB 15), migrations included:
+
+```bash
+# Full suite with the coverage gate
+docker compose run --rm backend pytest tests -v --cov=app --cov-fail-under=65
+
+# Lint & types (same gates as CI)
+docker compose run --rm backend ruff check .
+docker compose run --rm backend mypy app --ignore-missing-imports
+```
+
+CI runs the identical suite against Postgres/Redis service containers on `localhost`, which is why the suite picks its database host automatically. Schema migrations run automatically via the one-shot `migrate` service on `docker compose up` (and a Kubernetes initContainer in prod).
+
 ---
 
 ## Project Structure
@@ -87,12 +102,20 @@ civicpulse/
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/complaints` | Submit a complaint; title 5–150 chars, description 10–2,000 chars, location 3–200 chars |
-| `GET` | `/api/complaints` | List with optional `category`, `priority`, `status`, `skip`, and `limit` filters |
+| `GET` | `/api/complaints` | List with optional `category`, `priority`, `status`, `page`, and `page_size` filters; returns `{items, total, page, page_size}` |
 | `GET` | `/api/complaints/{id}` | Retrieve one complaint |
 | `PATCH` | `/api/complaints/{id}/status` | Change lifecycle status; invalid transitions return `409` |
 | `GET` | `/api/stats` | Retrieve aggregates and an `X-Cache` header |
-| `GET` | `/api/meta/providers` | Inspect triage provider metadata |
-| `GET` | `/api/health`, `/api/ready` | Liveness and readiness checks |
+| `GET` | `/api/meta/providers` | Inspect triage provider metadata plus the last 20 triage outcomes (`provider`, `latency_ms`, `fallback`) |
+| `GET` | `/metrics` | Prometheus exposition: request count, request latency histogram, triage latency, fallback counter |
+| `GET` | `/health`, `/ready` (also under `/api`) | Liveness and readiness checks |
+
+Contract value sets (§2.3), lowercase on the wire:
+
+- `category`: `water` · `electricity` · `sanitation` · `roads` · `streetlights` · `other`
+- `priority`: `high` · `normal` · `low`
+- `status`: `open` · `in_progress` · `resolved` · `rejected` (default `open`; state machine `open → in_progress → resolved`, `open → rejected`, `in_progress → rejected`, terminal states, everything else — including same→same — `409`)
+- `triaged_by`: `llm:groq` · `llm:ollama` · `rules` · `rules:fallback` (plus `simulated`, the deterministic dev/CI provider)
 
 ## Operations
 

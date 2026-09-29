@@ -23,6 +23,22 @@ class RedisService:
         cls._memory_cache.clear()
 
     @classmethod
+    async def shutdown(cls) -> None:
+        """Close the live Redis connection during graceful shutdown (SIGTERM)."""
+        client = cls._redis_client
+        cls._redis_client = None
+        cls._connection_attempted = False
+        cls._memory_cache.clear()
+        if client is not None:
+            try:
+                await client.aclose()
+            except Exception:  # noqa: BLE001 — shutdown must never raise
+                try:
+                    await client.close()  # redis-py < 5 spelling
+                except Exception:
+                    pass
+
+    @classmethod
     async def get_client(cls) -> aioredis.Redis | None:
         if cls._redis_client is None and not cls._connection_attempted:
             cls._connection_attempted = True
@@ -37,11 +53,44 @@ class RedisService:
         return cls._redis_client
 
     @classmethod
+    async def check(cls) -> bool:
+        """Live reachability probe used by GET /ready.
+
+        Unlike get_client() this never answers from stale state: it pings the cached
+        client, and if that fails it drops the memoised connection and retries, so a
+        pod that lost Redis during startup can become ready again once Redis returns.
+        """
+        client = await cls.get_client()
+        if client is not None:
+            try:
+                await client.ping()
+                return True
+            except Exception:
+                cls._redis_client = None
+                cls._connection_attempted = False
+
+        # First attempt (or the cached client just failed): allow a fresh connect.
+        cls._connection_attempted = False
+        client = await cls.get_client()
+        if client is None:
+            # Leave the memo clear so the next probe retries instead of reporting stale failure.
+            cls._connection_attempted = False
+            return False
+        try:
+            await client.ping()
+            return True
+        except Exception:
+            cls._redis_client = None
+            cls._connection_attempted = False
+            return False
+
+    @classmethod
     async def get(cls, key: str) -> str | None:
         client = await cls.get_client()
         if client:
             try:
-                return await client.get(key)
+                value = await client.get(key)
+                return value.decode() if isinstance(value, bytes) else value
             except Exception:
                 pass
 

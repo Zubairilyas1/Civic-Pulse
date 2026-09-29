@@ -49,7 +49,7 @@ git checkout -b feat/sami/frontend-core
 ## 3. Frontend Architecture & Design Guidelines (Authentic SaaS UI)
 
 ### 🎨 Visual & Design Rules (No "AI Slop")
-- **Color Palette:** Slate background (`bg-slate-900` for dark or `bg-slate-50` for light), Indigo primary (`indigo-600`), Emerald for `RESOLVED` / `X-Cache: HIT`, Amber for `IN_PROGRESS` / `MEDIUM`, Rose for `CRITICAL` / `X-Cache: MISS`.
+- **Color Palette:** Slate background (`bg-slate-900` for dark or `bg-slate-50` for light), Indigo primary (`indigo-600`), Emerald for `resolved` / `X-Cache: HIT`, Amber for `in_progress` / `normal`, Rose for `rejected` / `X-Cache: MISS`.
 - **Banned Clichés:** 
   - ❌ NO glowing purple/neon radial background orbs or dark mode gradients.
   - ❌ NO ubiquitous sparkle emojis (✨) in subheadings.

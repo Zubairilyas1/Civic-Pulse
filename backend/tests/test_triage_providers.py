@@ -1,14 +1,9 @@
 import asyncio
 
-from fastapi.testclient import TestClient
-
-from app.main import app
 from app.providers.triage.factory import TriageFactory
 from app.providers.triage.rules import RuleBasedTriage
 from app.providers.triage.simulated import SimulatedTriage
 from app.schemas.complaint import CategoryEnum, PriorityEnum
-
-client = TestClient(app)
 
 
 def test_rule_based_triage_water_category():
@@ -22,10 +17,9 @@ def test_rule_based_triage_water_category():
     assert result.category == CategoryEnum.WATER
     assert result.priority in [
         PriorityEnum.HIGH,
-        PriorityEnum.CRITICAL,
-        PriorityEnum.MEDIUM,
+        PriorityEnum.NORMAL,
     ]
-    assert result.triaged_by == "rule_based_v1"
+    assert result.triaged_by == "rules"
 
 
 def test_rule_based_triage_electricity_category():
@@ -37,8 +31,8 @@ def test_rule_based_triage_electricity_category():
         )
     )
     assert result.category == CategoryEnum.ELECTRICITY
-    assert result.priority == PriorityEnum.CRITICAL
-    assert result.triaged_by == "rule_based_v1"
+    assert result.priority == PriorityEnum.HIGH
+    assert result.triaged_by == "rules"
 
 
 def test_simulated_triage_deterministic():
@@ -48,7 +42,7 @@ def test_simulated_triage_deterministic():
 
     assert res1.category == res2.category
     assert res1.priority == res2.priority
-    assert res1.triaged_by == "simulated_v1"
+    assert res1.triaged_by == "simulated"
 
 
 def test_triage_factory_resolution():
@@ -59,7 +53,7 @@ def test_triage_factory_resolution():
     assert isinstance(p2, SimulatedTriage)
 
 
-def test_complaint_creation_auto_triages():
+def test_complaint_creation_auto_triages(client):
     payload = {
         "title": "Severe Sewage Overflow on Main Avenue",
         "description": "Black water and filth is spilling out of broken sewer gutters near the market.",
@@ -69,14 +63,14 @@ def test_complaint_creation_auto_triages():
     assert response.status_code == 201
 
     data = response.json()
-    assert data["status"] == "TRIAGED"
+    assert data["status"] == "open"
     assert data["category"] in [
-        "SANITATION",
-        "WATER",
-        "WASTE",
-        "ROADS",
-        "ELECTRICITY",
-        "OTHER",
+        "sanitation",
+        "water",
+        "streetlights",
+        "roads",
+        "electricity",
+        "other",
     ]
     assert data["priority"] is not None
     assert data["summary"] is not None

@@ -20,6 +20,16 @@ class RuleBasedTriage(BaseTriageProvider):
             "tap",
             "overflow",
         ],
+        # Contract has no `waste` category — streetlight complaints get their own slot,
+        # and the bucket is listed before ROADS so it wins keyword ties like "street light".
+        CategoryEnum.STREETLIGHTS: [
+            "streetlight",
+            "street light",
+            "street lamp",
+            "lamp post",
+            "lamppost",
+            "traffic light",
+        ],
         CategoryEnum.ROADS: [
             "road",
             "pothole",
@@ -44,17 +54,6 @@ class RuleBasedTriage(BaseTriageProvider):
             "light",
             "spark",
         ],
-        CategoryEnum.WASTE: [
-            "garbage",
-            "trash",
-            "waste",
-            "dump",
-            "bin",
-            "litter",
-            "rubbish",
-            "cleaning",
-            "heap",
-        ],
         CategoryEnum.SANITATION: [
             "sanitation",
             "sewer",
@@ -68,7 +67,9 @@ class RuleBasedTriage(BaseTriageProvider):
         ],
     }
 
-    _CRITICAL_WORDS = [
+    # Contract priorities are high · normal · low (§2.3) — the old critical tier
+    # folds into `high`, because the enum has no value above it.
+    _HIGH_WORDS = [
         "danger",
         "hazard",
         "fire",
@@ -78,8 +79,6 @@ class RuleBasedTriage(BaseTriageProvider):
         "collapse",
         "severe",
         "life",
-    ]
-    _HIGH_WORDS = [
         "urgent",
         "blocking",
         "heavy",
@@ -89,7 +88,7 @@ class RuleBasedTriage(BaseTriageProvider):
         "blackout",
         "main street",
     ]
-    _MEDIUM_WORDS = ["leaking", "pothole", "garbage", "smell", "delay", "issue"]
+    _NORMAL_WORDS = ["leaking", "pothole", "garbage", "smell", "delay", "issue"]
 
     def _determine_category(self, text: str) -> CategoryEnum:
         text_lower = text.lower()
@@ -108,12 +107,10 @@ class RuleBasedTriage(BaseTriageProvider):
     def _determine_priority(self, text: str) -> PriorityEnum:
         text_lower = text.lower()
 
-        if any(w in text_lower for w in self._CRITICAL_WORDS):
-            return PriorityEnum.CRITICAL
         if any(w in text_lower for w in self._HIGH_WORDS):
             return PriorityEnum.HIGH
-        if any(w in text_lower for w in self._MEDIUM_WORDS):
-            return PriorityEnum.MEDIUM
+        if any(w in text_lower for w in self._NORMAL_WORDS):
+            return PriorityEnum.NORMAL
 
         return PriorityEnum.LOW
 
@@ -128,6 +125,6 @@ class RuleBasedTriage(BaseTriageProvider):
             category=category,
             priority=priority,
             summary=summary,
-            triaged_by="rule_based_v1",
+            triaged_by="rules",
             confidence_score=0.85,
         )

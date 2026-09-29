@@ -37,6 +37,6 @@ describe("SubmitForm", () => {
       location: complaintFixture.location,
     });
     expect(await screen.findByRole("heading", { name: "Complaint received" })).toBeInTheDocument();
-    expect(screen.getByText("simulated_v1")).toBeInTheDocument();
+    expect(screen.getByText("simulated")).toBeInTheDocument();
   });
 });

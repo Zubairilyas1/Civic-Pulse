@@ -37,10 +37,10 @@ The backend follows a strict 4-layer architecture isolating HTTP interface conce
 ```
 
 ### Key File & Line References:
-- **Routes Layer:** [backend/app/routes/complaints.py:18-77](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/routes/complaints.py#L18-L77) handles HTTP POST `/api/complaints`, GET `/api/complaints`, GET `/api/complaints/{id}`, and PATCH `/api/complaints/{id}/status`.
-- **Service Layer:** [backend/app/services/complaint_service.py:27-68](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/complaint_service.py#L27-L68) orchestrates AI triage execution, invokes `ComplaintStateMachine`, and triggers Redis stats cache invalidation.
-- **Repository Layer:** [backend/app/repositories/complaint_repository.py:25-58](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/repositories/complaint_repository.py#L25-L58) executes database inserts and select queries using SQLAlchemy async session.
-- **Schema Layer:** [backend/app/schemas/complaint.py:10-40](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/schemas/complaint.py#L10-L40) defines request/response contracts (`ComplaintCreate`, `ComplaintResponse`, `StatusEnum`, `CategoryEnum`, `PriorityEnum`).
+- **Routes Layer:** [backend/app/routes/complaints.py:17-96](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/routes/complaints.py#L17-L96) handles HTTP POST `/api/complaints`, GET `/api/complaints`, GET `/api/complaints/{id}`, and PATCH `/api/complaints/{id}/status`. No route opens a database session directly — every handler receives one from the `get_db_session` dependency.
+- **Service Layer:** [backend/app/services/complaint_service.py:25-141](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/complaint_service.py#L25-L141) orchestrates AI triage execution (with wall-clock latency measurement), invokes `ComplaintStateMachine`, emits the contract's single fallback WARNING, and triggers Redis stats cache invalidation.
+- **Repository Layer:** [backend/app/repositories/complaint_repository.py:19-174](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/repositories/complaint_repository.py#L19-L174) executes database inserts and select queries using SQLAlchemy async session; malformed UUIDs are converted to "not found" instead of database errors.
+- **Schema Layer:** [backend/app/schemas/complaint.py:8-106](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/schemas/complaint.py#L8-L106) defines request/response contracts (`ComplaintCreate`, `ComplaintResponse`, `StatusEnum`, `CategoryEnum`, `PriorityEnum`) with the contract's lowercase enum values.
 
 ---
 
@@ -60,9 +60,9 @@ This approach avoids hard-coding production URLs and keeps public runtime config
 
 The frontend uses focused React state rather than a global store because each page owns a small, independent slice of server interaction:
 
-1. **Local component state:** `frontend/src/components/SubmitForm.tsx:37-89` owns form values, validation errors, submit progress, API error, and the resulting triage object. It normalizes input and validates the same length boundaries enforced by the backend before calling the API. `frontend/src/pages/DashboardPage.tsx:18-61` owns filters, page offset, fetched complaints, and loading/error state. `frontend/src/pages/StatsPage.tsx:7-47` independently fetches aggregate data and records the `X-Cache` header.
-2. **Typed API boundary:** Enums and response shapes live in `frontend/src/api/types.ts:1-67`; requests and HTTP error translation live in `frontend/src/api/client.ts:11-111`. Components call `civicPulseApi` rather than raw `fetch`, which keeps route strings, query serialization, and 409/429 handling consistent and makes the API calls easy to mock in Vitest.
-3. **State-transition safety:** `frontend/src/api/status.ts:3-10` exposes only the normal forward lifecycle. The Dashboard asks for confirmation before invoking the PATCH request (`frontend/src/pages/DashboardPage.tsx:65-94`) and renders the backend's conflict message if the server rejects a stale or invalid transition.
+1. **Local component state:** `frontend/src/components/SubmitForm.tsx:39-130` owns form values, validation errors, submit progress, API error, and the resulting triage object. It normalizes input and validates the same length boundaries enforced by the backend before calling the API. `frontend/src/pages/DashboardPage.tsx:22-95` owns filters, page/page_size, fetched complaints, total count, and loading/error state. `frontend/src/pages/StatsPage.tsx:7-47` independently fetches aggregate data and records the `X-Cache` header.
+2. **Typed API boundary:** Contract enums and response shapes live in `frontend/src/api/types.ts:2-78`; requests and HTTP error translation live in `frontend/src/api/client.ts:12-131`. Components call `civicPulseApi` rather than raw `fetch`, which keeps route strings, query serialization, and 409/429 handling consistent and makes the API calls easy to mock in Vitest.
+3. **State-transition safety:** `frontend/src/api/status.ts:3-10` exposes only the contract's forward lifecycle (`open → in_progress → resolved`). The Dashboard asks for confirmation before invoking the PATCH request (`frontend/src/pages/DashboardPage.tsx:78-95`) and renders the backend's conflict message if the server rejects a stale or invalid transition.
 4. **Failure containment:** `frontend/src/components/ErrorBoundary.tsx:11-48` catches unhandled render errors outside the route tree and presents a recovery action. Request failures remain page-level alerts, while the error boundary is reserved for unexpected component failures. It is mounted above the router in `frontend/src/main.tsx:8-14`.
 
 The component suite verifies form validation/submission, dashboard rendering, confirmed transitions, cache badge styling, and the error-boundary fallback in `frontend/tests/`.
@@ -73,10 +73,12 @@ The component suite verifies form validation/submission, dashboard rendering, co
 
 The AI layer is built on the Strategy Pattern with explicit multi-tier fallback to ensure zero runtime failures:
 
-1. **Provider Strategy & Factory:** `TriageFactory.get_provider()` dynamically selects the triage provider specified by the `TRIAGE_PROVIDER` environment variable ([backend/app/providers/triage/factory.py:12-26](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/factory.py#L12-L26)).
-2. **Groq Cloud LLM with Fallback:** `LLMTriage` uses `llama-3.3-70b-versatile` with a 10-second request timeout and automatic retries. If the Groq API returns 429 Rate Limit or 5xx Server Error, `LLMTriage` falls back to `RuleBasedTriage` ([backend/app/providers/triage/llm.py:30-90](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/llm.py#L30-L90)).
-3. **Rule-Based Keyword Fallback:** `RuleBasedTriage` scans complaint title and description using regex matching across Urdu and English keywords (`paani`, `water`, `electricity`, `bijli`, `road`, `kachra`) ([backend/app/providers/triage/rules.py:10-70](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/rules.py#L10-L70)).
-4. **Prompt Injection Shielding:** `PromptGuardrail` inspects input strings for jailbreak patterns (`ignore previous instructions`, `system prompt`, `override priority`) and redacts malicious text to `[REDACTED_INJECTION]` ([backend/app/providers/triage/guardrails.py:18-31](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/guardrails.py#L18-L31)).
+1. **Provider Strategy & Factory:** `TriageFactory.get_provider()` dynamically selects the triage provider specified by the `TRIAGE_PROVIDER` environment variable ([backend/app/providers/triage/factory.py:13-25](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/factory.py#L13-L25)).
+2. **Groq Cloud LLM with Contract Retry Policy:** `LLMTriage` wraps the whole call in a 10-second wall-clock `asyncio.timeout` budget, retries exactly once and only for `429` or `5xx` responses, and never retries `4xx` — every failure path falls back to `RuleBasedTriage` with `triaged_by = rules:fallback` ([backend/app/providers/triage/llm.py:18-153](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/llm.py#L18-L153)). The retry rules are pinned by `tests/test_llm_retry_policy.py` (429 retried once, 400 not retried, 503 retried once, budget overrun falls back).
+3. **Single Fallback WARNING:** The contract requires one WARNING per fallback carrying complaint id, provider and error class. Providers only annotate the result (`fallback_reason`); `ComplaintService` emits the single WARNING after persist, where the complaint id exists ([backend/app/services/complaint_service.py:57-73](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/complaint_service.py#L57-L73)).
+4. **Rule-Based Keyword Fallback:** `RuleBasedTriage` scores categories from regex keyword buckets (Urdu and English: `paani`, `water`, `bijli`, `street light`, `kachra`) and maps urgency words onto the contract's `high · normal · low` priorities ([backend/app/providers/triage/rules.py:10-130](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/rules.py#L10-L130)).
+5. **Prompt Injection Shielding:** `PromptGuardrail` inspects input strings for jailbreak patterns (`ignore previous instructions`, `system prompt`, `override priority`) and redacts malicious text to `[REDACTED_INJECTION]` ([backend/app/providers/triage/guardrails.py:18-31](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/providers/triage/guardrails.py#L18-L31)).
+6. **Observability Surface:** `GET /metrics` exposes Prometheus request count, request latency histogram, `triage_duration_seconds` and `triage_fallbacks_total` ([backend/app/metrics.py](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/metrics.py), [backend/app/routes/metrics.py](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/routes/metrics.py)); `GET /api/meta/providers` adds the last 20 triage outcomes (provider, latency ms, fallback y/n) from a bounded ring buffer ([backend/app/services/triage_log.py](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/triage_log.py)).
 
 ---
 
@@ -85,25 +87,25 @@ The AI layer is built on the Strategy Pattern with explicit multi-tier fallback 
 Redis serves a dual purpose in the backend architecture:
 
 1. **Stats Cache (30s TTL with Write Invalidation):**
-   - The `/api/stats` endpoint caches complaint counts and category breakdown in Redis with a 30-second TTL ([backend/app/services/stats_service.py:15-50](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/stats_service.py#L15-L50)).
+   - The `/api/stats` endpoint caches complaint counts and category breakdown in Redis with a 30-second TTL under the key `civicpulse:cache:stats` ([backend/app/services/stats_service.py:14-34](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/stats_service.py#L14-L34)).
    - Responses return custom headers: `X-Cache: HIT` or `X-Cache: MISS`.
-   - On new complaint creation or status change, `ComplaintService` immediately invalidates the cache key (`stats:overview`) to preserve data consistency ([backend/app/services/complaint_service.py:43](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/complaint_service.py#L43)).
+   - On new complaint creation or status change, `ComplaintService` immediately invalidates the cache key to preserve data consistency ([backend/app/services/complaint_service.py:88-112](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/services/complaint_service.py#L88-L112)).
 
 2. **IP-Keyed Fixed Window Rate Limiter:**
-   - Middleware tracks client IP addresses in Redis (`rate_limit:<ip>:<window_timestamp>`) with a 60-second window limit (60 requests/min).
-   - If exceeded, the server rejects the request with `HTTP 429 Too Many Requests` and sets the `Retry-After: 60` response header ([backend/app/middleware/rate_limiter.py:15-60](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/middleware/rate_limiter.py#L15-L60)).
+   - Middleware keeps an in-memory per-IP sliding window of request timestamps (`60` requests per `60`s window), with `/health`, `/ready`, `/api/health` and `/api/ready` exempt so probes never consume budget ([backend/app/middleware/rate_limiter.py:9-45](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/middleware/rate_limiter.py#L9-L45)).
+   - If exceeded, the server rejects the request with `HTTP 429 Too Many Requests` and sets a dynamic `Retry-After` header (seconds until the oldest request leaves the window).
 
 ---
 
 ## Question 6: Database Schema, Indexing & Migration Strategy (Zubair)
 
 1. **Alembic Migration Tracking:**
-   - The initial database schema is generated via Alembic migration script `20260924_0001_initial_complaints_table.py` ([backend/alembic/versions/20260924_0001_initial_complaints_table.py:15-65](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/alembic/versions/20260924_0001_initial_complaints_table.py#L15-L65)).
+   - `20260924_0001_initial_complaints_table.py` creates the base table, `20260929_0002_contract_enum_values.py` switches storage to the contract's lowercase enum values (via `values_callable` so SQLAlchemy binds values, not names), and `20260929_0003_contract_schema_conformance.py` enforces §2.3 end-to-end in the database: UUID `id` with server default, `text` CHECK (`10–2000` chars), `location` CHECK (`3–200`), `timestamptz` UTC, `ai_summary varchar(140)` single-line CHECK, integer `triage_latency_ms`, and `reporter_contact varchar(200)` ([backend/alembic/versions/](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/alembic/versions)).
 2. **Indexing Strategy for Performance:**
-   - B-tree indexes are placed on high-cardinality query columns: `ix_complaints_status`, `ix_complaints_category`, and `ix_complaints_created_at`.
-   - These indexes eliminate full-table scans during filtered queries on `/api/complaints?category=...&status=...` ([backend/app/repositories/complaint_repository.py:78-85](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/repositories/complaint_repository.py#L78-L85)).
+   - B-tree indexes cover the API's filter and sort paths: `idx_status_priority` (composite — every list query can seek on `status` then order/compare by `priority` without a sort, which is why it exists rather than two single-column indexes), `idx_status_created_at` (supports the default `created_at DESC` ordering under a status filter), `idx_category_priority`, plus single-column indexes on `status`, `category`, `priority` and `created_at`.
+   - These indexes eliminate full-table scans during filtered queries on `/api/complaints?category=...&status=...` ([backend/app/repositories/complaint_repository.py:128-168](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/repositories/complaint_repository.py#L128-L168)).
 3. **Async Session Management:**
-   - SQLAlchemy `AsyncSession` is instantiated in `app/db/session.py` with automatic rollback on unhandled exceptions ([backend/app/db/session.py:10-35](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/db/session.py#L10-L35)).
+   - SQLAlchemy `AsyncSession` is instantiated in `app/db/session.py` with automatic rollback on unhandled exceptions ([backend/app/db/session.py:8-31](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/db/session.py#L8-L31)).
 
 ---
 
@@ -112,12 +114,14 @@ Redis serves a dual purpose in the backend architecture:
 The backend container configuration prioritizes minimal image footprint and strict security principles:
 
 1. **Multi-Stage Build (`builder` -> `runner`):**
-   - Stage 1 compiles dependencies into `/install` using `build-essential` and `libpq-dev` ([backend/Dockerfile:1-16](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/Dockerfile#L1-L16)).
-   - Stage 2 copies only compiled artifacts into a lightweight `python:3.11-slim` base image, stripping build tools and keeping image size minimal ([backend/Dockerfile:19-39](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/Dockerfile#L19-L39)).
+   - Stage 1 compiles dependencies into `/install` using `build-essential` and `libpq-dev` ([backend/Dockerfile:1-17](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/Dockerfile#L1-L17)).
+   - Stage 2 copies only compiled artifacts into a lightweight `python:3.11-slim` base image, stripping build tools and keeping image size minimal ([backend/Dockerfile:19-50](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/Dockerfile#L19-L50)).
 2. **Non-Root Execution Security:**
    - Container execution is locked to non-root user `appuser` (`UID 1000`) ([backend/Dockerfile:41-42](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/Dockerfile#L41-L42)).
 3. **Network Isolation in Compose:**
-   - `compose.yaml` separates containers into `edge` (ingress/frontend) and `internal` (backend, postgres, redis) networks. Database and Redis ports are not exposed to the host machine in production ([compose.yaml:12-58](file:///D:/5th%20Semester/1.SCD/Assignment/no1/compose.yaml#L12-L58)).
+   - `compose.yaml` separates containers into `edge` (ingress/frontend) and `internal` (backend, postgres, redis) networks. Database and Redis ports are not exposed to the host machine in production ([compose.yaml](file:///D:/5th%20Semester/1.SCD/Assignment/no1/compose.yaml)).
+4. **Graceful Shutdown (§2.2):**
+   - On SIGTERM, uvicorn drains connections and the lifespan hook closes the Redis client and disposes the async engine pool so in-flight requests finish cleanly and no connections leak across rolling restarts ([backend/app/main.py:18-30](file:///D:/5th%20Semester/1.SCD/Assignment/no1/backend/app/main.py#L18-L30)).
 
 ---
 
@@ -126,7 +130,7 @@ The backend container configuration prioritizes minimal image footprint and stri
 1. **Horizontal Pod Autoscaling (HPA):**
    - HPA scales backend replicas dynamically between `minReplicas: 2` and `maxReplicas: 10` based on a 60% CPU utilization threshold ([k8s/base/hpa.yaml:1-35](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/hpa.yaml#L1-L35)).
 2. **Health Probes:**
-   - **Liveness Probe:** Hits `/api/health` every 10s to verify python process responsiveness ([k8s/base/backend.yaml:45-50](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/backend.yaml#L45-L50)).
-   - **Readiness Probe:** Hits `/api/ready` every 5s to verify active database and Redis connectivity before routing ingress traffic ([k8s/base/backend.yaml:51-56](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/backend.yaml#L51-L56)).
+   - **Liveness Probe:** Hits `/api/health` every 10s to verify python process responsiveness ([k8s/base/backend.yaml:58-62](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/backend.yaml#L58-L62)).
+   - **Readiness Probe:** Hits `/api/ready` every 5s to verify active database and Redis connectivity before routing ingress traffic ([k8s/base/backend.yaml:64-68](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/backend.yaml#L64-L68)).
 3. **Pod Disruption Budget (PDB):**
    - Specifies `minAvailable: 1` to guarantee zero-downtime rolling updates or cluster node drains ([k8s/base/pdb.yaml:1-20](file:///D:/5th%20Semester/1.SCD/Assignment/no1/k8s/base/pdb.yaml#L1-L20)).

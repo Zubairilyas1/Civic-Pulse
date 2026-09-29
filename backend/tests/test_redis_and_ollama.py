@@ -1,13 +1,8 @@
 import asyncio
 
-from fastapi.testclient import TestClient
-
-from app.main import app
 from app.middleware.rate_limiter import RateLimiterMiddleware
 from app.providers.triage.factory import TriageFactory
 from app.providers.triage.ollama import OllamaTriage
-
-client = TestClient(app)
 
 
 def test_ollama_triage_fallback_when_unreachable():
@@ -21,7 +16,7 @@ def test_ollama_triage_fallback_when_unreachable():
 
     assert result is not None
     assert result.category is not None
-    assert "rule_based" in result.triaged_by  # Fallback verified!
+    assert result.triaged_by == "rules:fallback"  # Contract §2.3 fallback marker.
 
 
 def test_triage_factory_ollama_resolution():
@@ -29,7 +24,7 @@ def test_triage_factory_ollama_resolution():
     assert isinstance(provider, OllamaTriage)
 
 
-def test_stats_x_cache_header_and_invalidation():
+def test_stats_x_cache_header_and_invalidation(client):
     # 1. First call to /api/stats -> Cache MISS
     res1 = client.get("/api/stats")
     assert res1.status_code == 200
@@ -56,7 +51,7 @@ def test_stats_x_cache_header_and_invalidation():
     assert res3.headers.get("X-Cache") == "MISS"
 
 
-def test_rate_limiter_exceeded_returns_429():
+def test_rate_limiter_exceeded_returns_429(client):
     # Rapid requests to test rate limiter threshold
     import time
 
@@ -73,3 +68,22 @@ def test_rate_limiter_exceeded_returns_429():
 
     # Reset test limit state
     RateLimiterMiddleware._requests.clear()
+
+
+def test_health_probes_are_exempt_from_rate_limit(client):
+    """Kubernetes probes must never be throttled — a 429 probe looks like an outage."""
+    import time
+
+    now = time.time()
+    RateLimiterMiddleware._requests["testclient"] = [now] * 65
+    RateLimiterMiddleware._requests["127.0.0.1"] = [now] * 65
+    try:
+        # Regular endpoints are limited...
+        assert client.get("/api/stats").status_code == 429
+        # ...but every health/readiness path (root and /api copies) still answers.
+        assert client.get("/health").status_code == 200
+        assert client.get("/ready").status_code == 200
+        assert client.get("/api/health").status_code == 200
+        assert client.get("/api/ready").status_code == 200
+    finally:
+        RateLimiterMiddleware._requests.clear()

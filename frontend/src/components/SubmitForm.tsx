@@ -37,18 +37,19 @@ function messageFor(error: unknown): string {
 }
 
 function detectDraftCategory(title: string, description: string): { label: string; tone: string } {
+  // Mirrors the backend's keyword buckets (presentation hint only — the server decides).
   const combined = `${title} ${description}`.toLowerCase();
   if (/\b(water|leak|pipeline|drain|sewage|tap|overflow)\b/.test(combined)) {
     return { label: "WATER", tone: "bg-cyan-50 text-cyan-700 border-cyan-200" };
+  }
+  if (/\b(streetlight|street\s+light|street\s+lamp|lamp\s+post|lamppost|traffic\s+light)\b/.test(combined)) {
+    return { label: "STREETLIGHTS", tone: "bg-lime-50 text-lime-700 border-lime-200" };
   }
   if (/\b(road|pothole|street|asphalt|traffic|footpath|sidewalk)\b/.test(combined)) {
     return { label: "ROADS", tone: "bg-amber-50 text-amber-700 border-amber-200" };
   }
   if (/\b(power|electricity|wire|cable|transformer|outage|blackout|spark)\b/.test(combined)) {
     return { label: "ELECTRICITY", tone: "bg-indigo-50 text-indigo-700 border-indigo-200" };
-  }
-  if (/\b(garbage|trash|waste|dump|litter|bin)\b/.test(combined)) {
-    return { label: "WASTE", tone: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   }
   if (/\b(sanitation|sewer|stink|smell|filth|mosquito|contamination)\b/.test(combined)) {
     return { label: "SANITATION", tone: "bg-rose-50 text-rose-700 border-rose-200" };

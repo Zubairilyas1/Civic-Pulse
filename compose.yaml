@@ -12,6 +12,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
+    # NOTE: no published port, on purpose. The spec requires db/cache on `internal` only,
+    # and Docker installs no host forward for containers on an internal network anyway.
+    # Host-side tools therefore run the test suite inside the stack:
+    #   docker compose run --rm backend pytest tests -v
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d civicpulse"]
       interval: 5s
@@ -44,8 +48,27 @@ services:
     networks:
       - internal
 
+  # Database migration (one-shot): runs before the backend starts, exits when done.
+  # Shares the backend image (same `image:` tag) so both services always ship the
+  # same Alembic revision directory — separate implicit images would drift.
+  migrate:
+    image: no1-backend:dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/civicpulse
+    restart: "no"
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+
   # Backend API Service (FastAPI)
   backend:
+    image: no1-backend:dev
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -59,6 +82,11 @@ services:
       OLLAMA_HOST: http://ollama:11434
     ports:
       - "8000:8000"
+    volumes:
+      # DEV ONLY: mount the source so `docker compose run backend pytest ...` sees
+      # the local tree (the production image excludes tests, per .dockerignore).
+      # compose.prod.yaml uses the baked-in image with no mount.
+      - ./backend:/app
     networks:
       - edge
       - internal
@@ -67,6 +95,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   # Frontend Web Service (React + Nginx)
   frontend:

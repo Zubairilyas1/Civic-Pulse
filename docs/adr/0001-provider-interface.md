@@ -9,7 +9,7 @@
 
 ## 1. Context and Problem Statement
 
-The CivicPulse application relies on AI triage to classify incoming civic complaints into standard categories (`Water Supply`, `Electricity`, `Roads & Traffic`, `Sanitation`, `Public Safety`, `Parks & Rec`), assign priority levels (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`), and generate concise summaries.
+The CivicPulse application relies on AI triage to classify incoming civic complaints into the contract's standard categories (`water`, `electricity`, `sanitation`, `roads`, `streetlights`, `other`), assign priority levels (`high`, `normal`, `low`), and generate concise summaries.
 
 However, relying solely on a single cloud LLM API (such as Groq) presents several operational risks:
 1. **API Rate Limiting (HTTP 429):** High-volume traffic or quota depletion can cause requests to fail.

@@ -6,6 +6,16 @@ namespace: civicpulse-dev
 resources:
   - ../../base
 
+# Local clusters (k3d/kind) import images built as :dev.
+# Production never uses this overlay — see overlays/prod, which CI rewrites with an immutable commit SHA.
+images:
+  - name: ghcr.io/zubairilyas1/civicpulse-backend
+    newName: ghcr.io/zubairilyas1/civicpulse-backend
+    newTag: dev
+  - name: ghcr.io/zubairilyas1/civicpulse-frontend
+    newName: ghcr.io/zubairilyas1/civicpulse-frontend
+    newTag: dev
+
 patches:
   - target:
       kind: Deployment

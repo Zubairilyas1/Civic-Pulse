@@ -64,18 +64,21 @@ The backend emits an `X-Request-ID` response header and structured access logs. 
 ## 4. Triage Provider Failure
 
 1. Confirm the active provider with `GET /api/meta/providers`.
-2. Check backend logs for timeout, rate-limit, or validation errors.
-3. Do not retry a cloud provider with PII copied into a terminal or ticket.
-4. Set `TRIAGE_PROVIDER=rules` or `TRIAGE_PROVIDER=simulated` for a controlled fallback, then restart the backend deployment.
-5. Verify a new complaint is accepted and records a fallback `triaged_by` value.
+2. Check `recent_outcomes` on the same endpoint: each entry records `provider`, `latency_ms` and whether triage fell back, for the last 20 attempts.
+3. Check backend logs for one WARNING per fallback (`Triage fallback complaint_id=... provider=... error_class=...`); there should be exactly one per complaint, emitted after persist.
+4. Check backend logs for timeout, rate-limit, or validation errors. Groq calls carry a 10-second wall-clock budget, retry once only on `429`/`5xx`, and never retry `4xx`.
+5. Do not retry a cloud provider with PII copied into a terminal or ticket.
+6. Set `TRIAGE_PROVIDER=rules` or `TRIAGE_PROVIDER=simulated` for a controlled fallback, then restart the backend deployment.
+7. Verify a new complaint is accepted and records a fallback `triaged_by` value.
 
-The Groq and Ollama providers already fall back to rule-based triage when their primary request fails. Complaint creation should remain available.
+The Groq and Ollama providers already fall back to rule-based triage when their primary request fails, and `/metrics` increments `triage_fallbacks_total` in the same case. Complaint creation should remain available.
 
-## 5. Rate Limits and Cached Statistics
+## 5. Rate Limits, Cached Statistics and Metrics
 
-- A `429 Too Many Requests` response includes `Retry-After`. The frontend should wait for that period rather than repeatedly retrying.
+- A `429 Too Many Requests` response includes `Retry-After`. The frontend should wait for that period rather than repeatedly retrying. `/health` and `/ready` are exempt so probes never consume budget.
 - `/api/stats` is cached for 30 seconds. A complaint create or status update invalidates the stats cache, so the next request should be a cache miss.
 - If statistics are unexpectedly stale, verify the backend write succeeded before clearing Redis. Cache clearing is an operational exception, not the first response.
+- `GET /metrics` (also under `/api`) exposes `http_requests_total`, `http_request_duration_seconds`, `triage_duration_seconds` and `triage_fallbacks_total`. Route labels use path templates (`/complaints/{complaint_id}`), so cardinality stays bounded. Scrape it from Prometheus on the backend Service port `8000`.
 
 ## 6. Kubernetes Deployment and Rollback
 

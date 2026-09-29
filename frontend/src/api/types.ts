@@ -1,6 +1,7 @@
-export const CATEGORIES = ["WATER", "ROADS", "ELECTRICITY", "WASTE", "SANITATION", "OTHER"] as const;
-export const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
-export const STATUSES = ["SUBMITTED", "TRIAGED", "IN_PROGRESS", "RESOLVED", "REJECTED"] as const;
+// Contract value sets (§2.3): lowercase on the wire, rendered uppercase in the UI.
+export const CATEGORIES = ["water", "roads", "electricity", "streetlights", "sanitation", "other"] as const;
+export const PRIORITIES = ["low", "normal", "high"] as const;
+export const STATUSES = ["open", "in_progress", "resolved", "rejected"] as const;
 
 export type Category = (typeof CATEGORIES)[number];
 export type Priority = (typeof PRIORITIES)[number];
@@ -17,11 +18,13 @@ export interface Complaint {
   title: string;
   description: string;
   location: string;
+  reporter_contact?: string | null;
   status: ComplaintStatus;
   category: Category | null;
   priority: Priority | null;
   summary: string | null;
   triaged_by: string | null;
+  triage_latency_ms?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,8 +33,15 @@ export interface ComplaintFilters {
   category?: Category;
   priority?: Priority;
   status?: ComplaintStatus;
-  skip?: number;
-  limit?: number;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ComplaintListResponse {
+  items: Complaint[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface StatusUpdateInput {
@@ -52,7 +62,17 @@ export interface ProviderInfo {
   description: string;
 }
 
+export interface TriageOutcome {
+  complaint_id: string;
+  provider: string;
+  latency_ms: number;
+  fallback: boolean;
+  error_class?: string | null;
+  timestamp: string;
+}
+
 export interface ProvidersMeta {
   active_provider: string;
   available_providers: ProviderInfo[];
+  recent_outcomes?: TriageOutcome[];
 }

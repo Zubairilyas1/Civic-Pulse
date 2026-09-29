@@ -6,6 +6,18 @@ namespace: civicpulse-prod
 resources:
   - ../../base
 
+# DEPLOY BY IMMUTABLE REFERENCE: the committed tag below is a placeholder that does not exist,
+# so a bare `kubectl apply -k` fails loudly instead of silently deploying a mutable tag.
+# CI (cd.yml deploy job) and scripts/set-image.sh overwrite it with the commit SHA:
+#   kustomize edit set image backend=ghcr.io/zubairilyas1/civicpulse-backend:<sha>
+images:
+  - name: ghcr.io/zubairilyas1/civicpulse-backend
+    newName: ghcr.io/zubairilyas1/civicpulse-backend
+    newTag: v0.0.0
+  - name: ghcr.io/zubairilyas1/civicpulse-frontend
+    newName: ghcr.io/zubairilyas1/civicpulse-frontend
+    newTag: v0.0.0
+
 patches:
   - target:
       kind: Deployment

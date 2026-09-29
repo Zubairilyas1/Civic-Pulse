@@ -1,12 +1,5 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
-
-
-def test_valid_state_transitions_lifecycle():
-    # 1. Create complaint (Auto-triaged to TRIAGED)
+def test_valid_state_transitions_lifecycle(client):
+    # 1. Create complaint (auto-triaged, but the contract keeps status at `open`)
     create_res = client.post(
         "/api/complaints",
         json={
@@ -17,21 +10,21 @@ def test_valid_state_transitions_lifecycle():
     )
     assert create_res.status_code == 201
     complaint_id = create_res.json()["id"]
-    assert create_res.json()["status"] == "TRIAGED"
+    assert create_res.json()["status"] == "open"
 
-    # 2. Advance to IN_PROGRESS (Valid from TRIAGED)
-    progress_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
+    # 2. open -> in_progress (valid)
+    progress_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "in_progress"})
     assert progress_res.status_code == 200
-    assert progress_res.json()["status"] == "IN_PROGRESS"
+    assert progress_res.json()["status"] == "in_progress"
 
-    # 3. Advance to RESOLVED (Valid from IN_PROGRESS)
-    resolve_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"})
+    # 3. in_progress -> resolved (valid)
+    resolve_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "resolved"})
     assert resolve_res.status_code == 200
-    assert resolve_res.json()["status"] == "RESOLVED"
+    assert resolve_res.json()["status"] == "resolved"
 
 
-def test_invalid_state_transition_returns_409():
-    # 1. Create complaint (Auto-triaged to TRIAGED)
+def test_invalid_state_transition_returns_409(client):
+    # 1. Create complaint
     create_res = client.post(
         "/api/complaints",
         json={
@@ -42,15 +35,57 @@ def test_invalid_state_transition_returns_409():
     )
     assert create_res.status_code == 201
     complaint_id = create_res.json()["id"]
-    assert create_res.json()["status"] == "TRIAGED"
+    assert create_res.json()["status"] == "open"
 
-    # 2. Advance to RESOLVED then attempt invalid transition back to IN_PROGRESS (Forbidden from terminal state)
-    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
-    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "RESOLVED"})
+    # 2. Advance to resolved then attempt invalid transition back to in_progress
+    #    (forbidden from a terminal state)
+    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "in_progress"})
+    client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "resolved"})
 
-    invalid_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "IN_PROGRESS"})
+    invalid_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "in_progress"})
     assert invalid_res.status_code == 409
     detail = invalid_res.json()["detail"]
     assert detail["error"] == "InvalidStatusTransition"
-    assert detail["current_status"] == "RESOLVED"
-    assert detail["target_status"] == "IN_PROGRESS"
+    assert detail["current_status"] == "resolved"
+    assert detail["target_status"] == "in_progress"
+
+
+def test_same_status_patch_is_409_not_silent_noop(client):
+    # The contract's transition table has no same-to-same edge: everything else is 409.
+    create_res = client.post(
+        "/api/complaints",
+        json={
+            "title": "Clogged Drain on Corner Lane",
+            "description": "Storm drain is clogged and water is pooling on the pavement.",
+            "location": "Corner Lane, Block C",
+        },
+    )
+    assert create_res.status_code == 201
+    complaint_id = create_res.json()["id"]
+
+    noop_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "open"})
+    assert noop_res.status_code == 409
+    detail = noop_res.json()["detail"]
+    assert detail["current_status"] == "open"
+    assert detail["target_status"] == "open"
+
+
+def test_open_can_be_rejected(client):
+    create_res = client.post(
+        "/api/complaints",
+        json={
+            "title": "Duplicate Sidewalk Crack Report",
+            "description": "This crack was already reported last week by a neighbour.",
+            "location": "Sector G-10, Islamabad",
+        },
+    )
+    assert create_res.status_code == 201
+    complaint_id = create_res.json()["id"]
+
+    reject_res = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "rejected"})
+    assert reject_res.status_code == 200
+    assert reject_res.json()["status"] == "rejected"
+
+    # rejected is terminal
+    after_terminal = client.patch(f"/api/complaints/{complaint_id}/status", json={"status": "in_progress"})
+    assert after_terminal.status_code == 409

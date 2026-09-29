@@ -1,5 +1,5 @@
 import time
-from typing import Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
@@ -14,9 +14,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
     _MAX_REQUESTS = 60  # 60 requests per minute
     _WINDOW_SECONDS = 60.0
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Exempt health check endpoints from rate limiting
-        if request.url.path in ["/api/health", "/api/ready"]:
+    async def dispatch(self, request: Request, call_next: Callable[..., Awaitable[Response]]) -> Response:
+        # Liveness/readiness probes (root and /api copies) must never be throttled:
+        # a rate-limited probe looks like an outage to Kubernetes.
+        if request.url.path in ("/health", "/ready", "/api/health", "/api/ready"):
             return await call_next(request)
 
         client_ip = request.client.host if request.client else "127.0.0.1"

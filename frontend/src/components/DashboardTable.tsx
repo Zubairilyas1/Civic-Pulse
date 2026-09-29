@@ -155,7 +155,7 @@ function ComplaintRow({
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
-            aria-label={`Advance to ${nextStatus.replace(/_/g, " ")}`}
+            aria-label={`Advance to ${nextStatus.replace(/_/g, " ").toUpperCase()}`}
             className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-600 hover:text-white disabled:opacity-40 transition-all"
             disabled={isUpdating}
             onClick={() => onAdvanceStatus(complaint)}

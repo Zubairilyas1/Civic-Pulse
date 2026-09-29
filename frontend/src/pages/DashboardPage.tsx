@@ -20,7 +20,8 @@ const initialFilters: FilterState = { searchQuery: "", category: "", priority: "
 
 export function DashboardPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilters);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +39,13 @@ export function DashboardPage() {
         category: filters.category || undefined,
         priority: filters.priority || undefined,
         status: filters.status || undefined,
-        skip: page * PAGE_SIZE,
-        limit: PAGE_SIZE,
+        page,
+        page_size: PAGE_SIZE,
       })
       .then((data) => {
         if (isCurrent) {
-          setComplaints(data);
+          setComplaints(data.items);
+          setTotal(data.total);
         }
       })
       .catch((requestError: unknown) => {
@@ -65,12 +67,12 @@ export function DashboardPage() {
 
   function setFilter<K extends keyof FilterState>(key: K, value: FilterState[K]): void {
     setFilters((current) => ({ ...current, [key]: value }));
-    setPage(0);
+    setPage(1);
   }
 
   function resetAllFilters(): void {
     setFilters(initialFilters);
-    setPage(0);
+    setPage(1);
   }
 
   async function confirmTransition(): Promise<void> {
@@ -91,7 +93,7 @@ export function DashboardPage() {
     try {
       const updatedComplaint = await civicPulseApi.updateComplaintStatus(pendingTransition.id, { status: nextStatus });
       setComplaints((current) => current.map((complaint) => complaint.id === updatedComplaint.id ? updatedComplaint : complaint));
-      setTransitionMessage(`Status updated to ${updatedComplaint.status.replace(/_/g, " ")}.`);
+      setTransitionMessage(`Status updated to ${updatedComplaint.status.replace(/_/g, " ").toUpperCase()}.`);
       setPendingTransition(null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to update the complaint status.");
@@ -222,7 +224,7 @@ export function DashboardPage() {
               value={filters.status}
             >
               <option value="">All Statuses</option>
-              {STATUSES.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
+              {STATUSES.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ").toUpperCase()}</option>)}
             </select>
           </div>
         </div>
@@ -253,19 +255,21 @@ export function DashboardPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={page === 0 || isLoading}
-            onClick={() => setPage((current) => Math.max(0, current - 1))}
+            disabled={page === 1 || isLoading}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
             type="button"
           >
             <ChevronLeft className="h-4 w-4" />
             Previous Page
           </motion.button>
-          <span className="text-xs font-bold text-slate-500">Page {page + 1}</span>
+          <span className="text-xs font-bold text-slate-500">
+            Page {page} of {Math.max(1, Math.ceil(total / PAGE_SIZE))} · {total} complaint{total === 1 ? "" : "s"}
+          </span>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={complaints.length < PAGE_SIZE || isLoading}
+            disabled={page * PAGE_SIZE >= total || isLoading}
             onClick={() => setPage((current) => current + 1)}
             type="button"
           >
@@ -299,9 +303,9 @@ export function DashboardPage() {
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-bold text-slate-900">{pendingTransition.title}</p>
                 <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-                  <span className="rounded bg-slate-200 px-2.5 py-1 text-slate-700">{pendingTransition.status.replace(/_/g, " ")}</span>
+                  <span className="rounded bg-slate-200 px-2.5 py-1 text-slate-700">{pendingTransition.status.replace(/_/g, " ").toUpperCase()}</span>
                   <ArrowRight className="h-4 w-4 text-slate-400" />
-                  <span className="rounded bg-emerald-600 px-2.5 py-1 text-white font-bold">{getNextStatus(pendingTransition.status)?.replace(/_/g, " ")}</span>
+                  <span className="rounded bg-emerald-600 px-2.5 py-1 text-white font-bold">{getNextStatus(pendingTransition.status)?.replace(/_/g, " ").toUpperCase()}</span>
                 </div>
               </div>
               <div className="mt-6 flex justify-end gap-3">
