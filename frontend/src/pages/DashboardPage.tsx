@@ -207,7 +207,7 @@ export function DashboardPage() {
             </select>
           </div>
 
-          {/* Compact Priority Dropdown */}
+          {/* Filter complaints by triage priority. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-priority">
               Priority Level
