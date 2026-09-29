@@ -223,7 +223,7 @@ export function DashboardPage() {
             </select>
           </div>
 
-          {/* Compact Status Dropdown */}
+          {/* Filter complaints by workflow status. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-status">
               Complaint Status
