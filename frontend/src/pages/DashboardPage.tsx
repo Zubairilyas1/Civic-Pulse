@@ -76,6 +76,7 @@ export function DashboardPage() {
     setPage(1);
   }
 
+  // Restore all filters and return to the first page.
   function resetAllFilters(): void {
     setFilters(initialFilters);
     setPage(1);
