@@ -241,7 +241,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Table Area */}
+      {/* Complaint results, request errors, and status feedback. */}
       <div className="mt-6">
         {error && <Alert tone="error">{error}</Alert>}
         {transitionMessage && <div className={error ? "mt-4" : ""}><Alert tone="success">{transitionMessage}</Alert></div>}
