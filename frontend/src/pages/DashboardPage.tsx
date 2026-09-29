@@ -87,6 +87,7 @@ export function DashboardPage() {
       return;
     }
 
+    // Derive the next state from the shared status transition rules.
     const nextStatus = getNextStatus(pendingTransition.status);
     if (!nextStatus) {
       setPendingTransition(null);
