@@ -1,5 +1,8 @@
 # CivicPulse 🏙️
 
+[![CI Pipeline](https://github.com/Zubairilyas1/Civic-Pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/Zubairilyas1/Civic-Pulse/actions/workflows/ci.yml)
+[![CD Deployment Pipeline](https://github.com/Zubairilyas1/Civic-Pulse/actions/workflows/cd.yml/badge.svg)](https://github.com/Zubairilyas1/Civic-Pulse/actions/workflows/cd.yml)
+
 > A full-stack civic complaint management system with AI-powered triage.
 
 **Team:** Zubair & Sami | **Course:** Software Construction & Design | **Duration:** 2 weeks
@@ -54,6 +57,12 @@ docker compose up --build
 
 > App available at http://localhost:3000 | API at http://localhost:8000/docs
 
+Optionally load the 32 canonical demo complaints (idempotent by title — a second run inserts 0 rows, and CI deliberately starts empty):
+
+```bash
+docker compose run --rm seed
+```
+
 ### Frontend development and verification
 
 ```bash
@@ -107,7 +116,7 @@ civicpulse/
 | `PATCH` | `/api/complaints/{id}/status` | Change lifecycle status; invalid transitions return `409` |
 | `GET` | `/api/stats` | Retrieve aggregates and an `X-Cache` header |
 | `GET` | `/api/meta/providers` | Inspect triage provider metadata plus the last 20 triage outcomes (`provider`, `latency_ms`, `fallback`) |
-| `GET` | `/metrics` | Prometheus exposition: request count, request latency histogram, triage latency, fallback counter |
+| `GET` | `/metrics` | Prometheus exposition: request count, request latency histogram, triage latency, fallback counter, triage cache hit rate |
 | `GET` | `/health`, `/ready` (also under `/api`) | Liveness and readiness checks |
 
 Contract value sets (§2.3), lowercase on the wire:
@@ -126,6 +135,8 @@ python scripts/check_submission.py
 ```
 
 See the [RUNBOOK](./docs/RUNBOOK.md) for deployment, verification, logs, triage failure handling, cache behavior, and Kubernetes rollback. Production deployment uses immutable Git SHA image tags; see [ADR 0003](./docs/adr/0003-deploy-by-sha.md).
+
+**Pipelines:** `ci.yml` gates every PR (lint, types, tests, coverage, image builds, compose integration, Trivy, `kustomize` + `kubeconform` manifest validation). `cd.yml` re-runs everything on `main`, publishes both images once by commit SHA to GHCR, then the `deploy-k8s` job boots an ephemeral kind cluster, deploys the prod overlay by that same SHA, waits for rollouts and smoke-tests the Ingress.
 
 ---
 

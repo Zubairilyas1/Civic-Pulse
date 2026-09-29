@@ -105,18 +105,21 @@ def _purge_test_state() -> None:
     try:
         client = sync_redis.Redis.from_url(os.environ["REDIS_URL"], socket_timeout=0.5)
         client.delete(STATS_CACHE_KEY)
+        # Rate-limit windows live in Redis now (distributed budget), so they must go too.
+        for limit_key in client.scan_iter("ratelimit:*"):
+            client.delete(limit_key)
         client.close()
     except Exception:
         pass  # A missing Redis must not fail the suite; the stats path degrades gracefully.
 
     # Drop memoised connections so the next request reconnects on its own event loop.
     from app.db.redis import RedisService
-    from app.middleware.rate_limiter import RateLimiterMiddleware
+    from app.providers.triage.cache import TriageCache
 
     RedisService._redis_client = None
     RedisService._connection_attempted = False
     RedisService._memory_cache.clear()
-    RateLimiterMiddleware._requests.clear()
+    TriageCache._cache.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)

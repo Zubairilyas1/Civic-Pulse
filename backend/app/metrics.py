@@ -32,3 +32,9 @@ TRIAGE_FALLBACKS_TOTAL = Counter(
     "Triage attempts that degraded to the rules provider or failed, by active provider.",
     ["provider"],
 )
+
+TRIAGE_CACHE_LOOKUPS_TOTAL = Counter(
+    "triage_cache_lookups_total",
+    "LLM triage cache probes, by result: hit (served from cache) or miss (provider called).",
+    ["result"],
+)

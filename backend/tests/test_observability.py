@@ -1,5 +1,8 @@
 """Observability surface: /metrics exposition and /api/meta/providers outcomes."""
 
+import httpx
+
+from app.config import settings
 from app.services.triage_log import MAX_OUTCOMES, TriageLog
 
 
@@ -16,8 +19,20 @@ def _create_complaint(client, title="Observability probe complaint") -> dict:
     return response.json()
 
 
-def test_metrics_endpoint_exposes_contract_metrics(client):
-    # Generate some traffic so the collectors have samples.
+def test_metrics_endpoint_exposes_contract_metrics(client, monkeypatch):
+    # Drive triage through LLMTriage without touching the network: the fallback
+    # path still counts cache lookups, so the exposition gains real samples.
+    async def _no_network(self, *args, **kwargs):  # noqa: ARG001
+        raise httpx.ConnectError("network disabled in tests")
+
+    monkeypatch.setattr(settings, "TRIAGE_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+    monkeypatch.setattr(httpx.AsyncClient, "post", _no_network)
+
+    # Two identical complaints: first is a cache miss, second is a cache hit.
+    _create_complaint(client)
+    _create_complaint(client)
+    # And a list GET so the request-count route label has a 200 sample.
     client.get("/api/complaints?page=1&page_size=5")
 
     response = client.get("/metrics")
@@ -30,6 +45,9 @@ def test_metrics_endpoint_exposes_contract_metrics(client):
     assert "http_request_duration_seconds" in body
     assert "triage_duration_seconds" in body
     assert "triage_fallbacks_total" in body
+    # Cache hit rate (rubric F-2): both counter values must be present.
+    assert 'triage_cache_lookups_total{result="miss"}' in body
+    assert 'triage_cache_lookups_total{result="hit"}' in body
     # Route labels are templates (path params collapsed), so cardinality stays
     # bounded; the /api mount prefix is not part of the route template.
     assert 'http_requests_total{method="GET",route="/complaints",status="200"}' in body

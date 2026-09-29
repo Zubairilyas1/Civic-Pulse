@@ -6,6 +6,7 @@ import random
 import httpx
 
 from app.config import settings
+from app.metrics import TRIAGE_CACHE_LOOKUPS_TOTAL
 from app.providers.triage.base import BaseTriageProvider
 from app.providers.triage.cache import TriageCache
 from app.providers.triage.guardrails import PromptGuardrail
@@ -127,11 +128,13 @@ class LLMTriage(BaseTriageProvider):
         if title_injected or desc_injected:
             logger.warning("Prompt injection attempt detected and sanitized.")
 
-        # Step 2: Content-Hash Cache Check
+        # Step 2: Content-Hash Cache Check (counted so /metrics reports a hit rate)
         cached = TriageCache.get(clean_title, clean_desc)
         if cached:
+            TRIAGE_CACHE_LOOKUPS_TOTAL.labels(result="hit").inc()
             logger.info("Triage result served from content-hash cache (Cache HIT).")
             return cached
+        TRIAGE_CACHE_LOOKUPS_TOTAL.labels(result="miss").inc()
 
         # Step 3: LLM API Call with Fallback
         try:
@@ -145,9 +148,14 @@ class LLMTriage(BaseTriageProvider):
             logger.info(f"LLMTriage falling back to rules: {type(exc).__name__}: {exc}")
             fallback_result = await self.fallback_provider.triage(clean_title, clean_desc)
             # Contract §2.3: LLM failures surface as triaged_by = rules:fallback.
-            return fallback_result.model_copy(
+            result = fallback_result.model_copy(
                 update={
                     "triaged_by": "rules:fallback",
                     "fallback_reason": f"{type(exc).__name__}: {exc}",
                 }
             )
+            # Rules are deterministic, so caching the degraded answer keeps the
+            # next identical complaint instant (and makes the hit rate measurable
+            # even where no LLM key is configured, e.g. the dev compose stack).
+            TriageCache.set(clean_title, clean_desc, result)
+            return result

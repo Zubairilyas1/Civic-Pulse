@@ -126,6 +126,32 @@ class RedisService:
         cls._memory_cache.pop(key, None)
 
     @classmethod
+    async def incr_window(cls, key: str, ttl_seconds: int) -> int | None:
+        """Atomically increment a fixed-window counter (contract §2.4, Job 2).
+
+        This is the distributed rate-limiter primitive: the counter lives in
+        Redis so N backend replicas share ONE budget instead of N budgets.
+        Returns the new count, or None when Redis is unreachable so the caller
+        can apply its own degradation policy.
+        """
+        client = await cls.get_client()
+        if client is None:
+            return None
+        try:
+            count = await client.incr(key)
+            if count == 1 or await client.ttl(key) < 0:
+                # First hit (or a key without expiry): bound its lifetime.
+                await client.expire(key, ttl_seconds)
+            return int(count)
+        except Exception:
+            # Memoise the failure like get_client() does: failing fast keeps a dead
+            # Redis from adding its 0.5s socket timeout to every request. The
+            # /ready probe calls check(), which clears this flag and re-connects.
+            cls._redis_client = None
+            cls._connection_attempted = True
+            return None
+
+    @classmethod
     async def flush_all(cls) -> None:
         client = await cls.get_client()
         if client:

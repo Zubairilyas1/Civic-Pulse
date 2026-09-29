@@ -1,8 +1,25 @@
 import asyncio
+import os
+import time
 
-from app.middleware.rate_limiter import RateLimiterMiddleware
+import redis as sync_redis
+
 from app.providers.triage.factory import TriageFactory
 from app.providers.triage.ollama import OllamaTriage
+
+
+def _seed_rate_limit(ip: str, count: int = 61) -> None:
+    """Pre-fill this minute's Redis window for an IP so the next request trips §2.4.
+
+    The counter is shared by every backend replica, so the test seeds it exactly
+    where production reads it: a `ratelimit:<ip>:<window>` key in Redis DB 15.
+    """
+    window = int(time.time() // 60)
+    client = sync_redis.Redis.from_url(os.environ["REDIS_URL"], socket_timeout=0.5)
+    try:
+        client.set(f"ratelimit:{ip}:{window}", count, ex=120)
+    finally:
+        client.close()
 
 
 def test_ollama_triage_fallback_when_unreachable():
@@ -52,38 +69,45 @@ def test_stats_x_cache_header_and_invalidation(client):
 
 
 def test_rate_limiter_exceeded_returns_429(client):
-    # Rapid requests to test rate limiter threshold
-    import time
-
-    now = time.time()
-
-    # Artificially trigger limit for testclient and 127.0.0.1 IPs
-    RateLimiterMiddleware._requests["testclient"] = [now] * 65
-    RateLimiterMiddleware._requests["127.0.0.1"] = [now] * 65
+    # The TestClient reports either IP depending on the transport; seed both so the
+    # assertion is deterministic. Counter lives in Redis (shared across replicas).
+    _seed_rate_limit("testclient")
+    _seed_rate_limit("127.0.0.1")
 
     response = client.get("/api/stats")
     assert response.status_code == 429
     assert "Retry-After" in response.headers
     assert response.json()["error"] == "Too Many Requests"
 
-    # Reset test limit state
-    RateLimiterMiddleware._requests.clear()
+
+def test_rate_limit_counter_lives_in_redis(client):
+    """Prove the budget is distributed: the window key must exist in Redis, not process memory."""
+    response = client.get("/api/stats")
+    assert response.status_code == 200
+
+    window = int(time.time() // 60)
+    redis_client = sync_redis.Redis.from_url(os.environ["REDIS_URL"], socket_timeout=0.5)
+    try:
+        counters = {}
+        for key in redis_client.scan_iter(f"ratelimit:*:{window}"):
+            value = redis_client.get(key)
+            if value is not None:
+                counters[key.decode()] = int(value)
+    finally:
+        redis_client.close()
+
+    assert counters, "no ratelimit window key in Redis — limiter counter is not distributed"
+    assert all(count >= 1 for count in counters.values())
 
 
 def test_health_probes_are_exempt_from_rate_limit(client):
     """Kubernetes probes must never be throttled — a 429 probe looks like an outage."""
-    import time
-
-    now = time.time()
-    RateLimiterMiddleware._requests["testclient"] = [now] * 65
-    RateLimiterMiddleware._requests["127.0.0.1"] = [now] * 65
-    try:
-        # Regular endpoints are limited...
-        assert client.get("/api/stats").status_code == 429
-        # ...but every health/readiness path (root and /api copies) still answers.
-        assert client.get("/health").status_code == 200
-        assert client.get("/ready").status_code == 200
-        assert client.get("/api/health").status_code == 200
-        assert client.get("/api/ready").status_code == 200
-    finally:
-        RateLimiterMiddleware._requests.clear()
+    _seed_rate_limit("testclient", 1000)
+    _seed_rate_limit("127.0.0.1", 1000)
+    # Regular endpoints are limited...
+    assert client.get("/api/stats").status_code == 429
+    # ...but every health/readiness path (root and /api copies) still answers.
+    assert client.get("/health").status_code == 200
+    assert client.get("/ready").status_code == 200
+    assert client.get("/api/health").status_code == 200
+    assert client.get("/api/ready").status_code == 200
