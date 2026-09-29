@@ -31,6 +31,7 @@ export function DashboardPage() {
   const [updatingComplaintId, setUpdatingComplaintId] = useState<string | null>(null);
   const [transitionMessage, setTransitionMessage] = useState<string | null>(null);
 
+  // Reload the queue when a server-side filter or page changes.
   useEffect(() => {
     let isCurrent = true;
     setIsLoading(true);
