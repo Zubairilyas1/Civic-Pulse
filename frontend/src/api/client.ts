@@ -3,6 +3,7 @@ import type {
   Complaint,
   ComplaintCreateInput,
   ComplaintFilters,
+  ComplaintListResponse,
   ComplaintStats,
   ProvidersMeta,
   StatusUpdateInput,
@@ -25,8 +26,23 @@ function getErrorMessage(detail: unknown, status: number): string {
     return detail;
   }
 
-  if (detail && typeof detail === "object" && "message" in detail && typeof detail.message === "string") {
-    return detail.message;
+  if (detail && typeof detail === "object") {
+    const record = detail as Record<string, unknown>;
+    const base = typeof record.message === "string" ? record.message : null;
+
+    // Contract 400 body: {detail: {error, message, fields: {title: [...]}}}
+    if (record.fields && typeof record.fields === "object") {
+      const fieldParts = Object.entries(record.fields as Record<string, unknown>)
+        .filter(([, messages]) => Array.isArray(messages))
+        .map(([field, messages]) => `${field}: ${(messages as string[]).join(", ")}`);
+      if (fieldParts.length > 0) {
+        return base ? `${base} — ${fieldParts.join("; ")}` : fieldParts.join("; ");
+      }
+    }
+
+    if (base) {
+      return base;
+    }
   }
 
   return `The request could not be completed (HTTP ${status}).`;
@@ -79,14 +95,14 @@ export const civicPulseApi = {
     });
   },
 
-  listComplaints(filters: ComplaintFilters = {}): Promise<Complaint[]> {
+  listComplaints(filters: ComplaintFilters = {}): Promise<ComplaintListResponse> {
     const searchParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
         searchParams.set(key, String(value));
       }
     });
-    return request<Complaint[]>(`/complaints${searchParams.size ? `?${searchParams.toString()}` : ""}`);
+    return request<ComplaintListResponse>(`/complaints${searchParams.size ? `?${searchParams.toString()}` : ""}`);
   },
 
   updateComplaintStatus(complaintId: string, input: StatusUpdateInput): Promise<Complaint> {

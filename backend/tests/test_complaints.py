@@ -1,11 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
-
-
-def test_create_and_get_complaint():
+def test_create_and_get_complaint(client):
     payload = {
         "title": "Broken Water Pipeline in Sector G-10",
         "description": "Clean drinking water is leaking profusely on Main Street near House 42.",
@@ -15,7 +8,7 @@ def test_create_and_get_complaint():
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == payload["title"]
-    assert data["status"] == "TRIAGED"
+    assert data["status"] == "open"
     assert "id" in data
 
     complaint_id = data["id"]
@@ -24,6 +17,6 @@ def test_create_and_get_complaint():
     assert get_res.json()["id"] == complaint_id
 
 
-def test_complaint_not_found():
+def test_complaint_not_found(client):
     response = client.get("/api/complaints/non-existent-id")
     assert response.status_code == 404

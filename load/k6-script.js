@@ -5,7 +5,7 @@ import { check, sleep } from 'k6';
 export const options = {
   stages: [
     { duration: '30s', target: 10 }, // Warm up
-    { duration: '1m', target: 35 },  # High load target (triggers HPA scaling)
+    { duration: '1m', target: 35 },  // High load target (triggers HPA scaling)
     { duration: '30s', target: 50 }, // Spike load
     { duration: '30s', target: 0 },  // Ramp down
   ],
@@ -42,10 +42,14 @@ export default function () {
   });
   sleep(0.5);
 
-  // 2. GET /api/complaints (Tests pagination & filtering)
-  const listRes = http.get(`${BASE_URL}/api/complaints?skip=0&limit=10`);
+  // 2. GET /api/complaints (Tests pagination & filtering — {items,total,page,page_size})
+  const listRes = http.get(`${BASE_URL}/api/complaints?page=1&page_size=10`);
   check(listRes, {
     'list status is 200': (r) => r.status === 200,
+    'list returns envelope': (r) => {
+      const body = JSON.parse(r.body);
+      return Array.isArray(body.items) && typeof body.total === 'number';
+    },
   });
   sleep(0.5);
 
@@ -64,7 +68,7 @@ export default function () {
 
   check(postRes, {
     'create status is 201': (r) => r.status === 201,
-    'complaint triaged': (r) => JSON.parse(r.body).status === 'TRIAGED',
+    'complaint created with contract status open': (r) => JSON.parse(r.body).status === 'open',
   });
 
   sleep(1);

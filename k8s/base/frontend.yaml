@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/zubairilyas1/civicpulse-frontend:latest
+          image: ghcr.io/zubairilyas1/civicpulse-frontend:v0.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

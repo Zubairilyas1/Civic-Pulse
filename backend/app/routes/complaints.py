@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.session import get_db_session
 from app.schemas.complaint import (
     CategoryEnum,
     ComplaintCreate,
+    ComplaintListResponse,
     ComplaintResponse,
     PriorityEnum,
     StatusEnum,
@@ -16,33 +19,41 @@ complaint_service = ComplaintService()
 
 
 @router.post("", response_model=ComplaintResponse, status_code=status.HTTP_201_CREATED)
-async def create_complaint(complaint: ComplaintCreate):
+async def create_complaint(
+    complaint: ComplaintCreate,
+    session: AsyncSession = Depends(get_db_session),
+) -> ComplaintResponse:
     """Submit a new civic complaint."""
-    return await complaint_service.create_complaint(complaint)
+    return await complaint_service.create_complaint(complaint, session=session)
 
 
-@router.get("", response_model=list[ComplaintResponse])
+@router.get("", response_model=ComplaintListResponse)
 async def list_complaints(
     category: CategoryEnum | None = None,
     priority: PriorityEnum | None = None,
     status: StatusEnum | None = None,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
-):
-    """Retrieve list of complaints with filtering and pagination."""
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    session: AsyncSession = Depends(get_db_session),
+) -> ComplaintListResponse:
+    """Retrieve one filtered page of complaints plus the filtered total."""
     return await complaint_service.list_complaints(
         category=category,
         priority=priority,
         status=status,
-        skip=skip,
-        limit=limit,
+        page=page,
+        page_size=page_size,
+        session=session,
     )
 
 
 @router.get("/{complaint_id}", response_model=ComplaintResponse)
-async def get_complaint(complaint_id: str):
+async def get_complaint(
+    complaint_id: str,
+    session: AsyncSession = Depends(get_db_session),
+) -> ComplaintResponse:
     """Get complaint details by ID."""
-    complaint = await complaint_service.get_complaint(complaint_id)
+    complaint = await complaint_service.get_complaint(complaint_id, session=session)
     if not complaint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -52,14 +63,22 @@ async def get_complaint(complaint_id: str):
 
 
 @router.patch("/{complaint_id}/status", response_model=ComplaintResponse)
-async def update_complaint_status(complaint_id: str, payload: StatusUpdate):
+async def update_complaint_status(
+    complaint_id: str,
+    payload: StatusUpdate,
+    session: AsyncSession = Depends(get_db_session),
+) -> ComplaintResponse:
     """Update complaint status with strict state machine validation.
 
     Raises 409 Conflict on invalid status transition.
     Raises 404 Not Found if complaint does not exist.
     """
     try:
-        return await complaint_service.update_status(complaint_id=complaint_id, target_status=payload.status)
+        return await complaint_service.update_status(
+            complaint_id=complaint_id,
+            target_status=payload.status,
+            session=session,
+        )
     except InvalidStateTransitionException as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

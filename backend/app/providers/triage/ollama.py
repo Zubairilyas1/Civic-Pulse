@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -14,6 +15,8 @@ logger = logging.getLogger("civicpulse.ollama_triage")
 class OllamaTriage(BaseTriageProvider):
     """Local Ollama LLM Triage provider with latency metrics and fallback."""
 
+    BUDGET_SECONDS = 10.0
+
     def __init__(self, fallback_provider: BaseTriageProvider | None = None):
         self.fallback_provider = fallback_provider or RuleBasedTriage()
         self.ollama_url = f"{settings.OLLAMA_HOST.rstrip('/')}/api/generate"
@@ -22,8 +25,8 @@ class OllamaTriage(BaseTriageProvider):
         prompt = (
             f"You are a civic complaint classifier. Classify the following complaint.\n"
             f"Title: {title}\nDescription: {description}\n\n"
-            f"Respond with JSON format containing keys 'category' (WATER, ROADS, ELECTRICITY, WASTE, SANITATION, OTHER), "
-            f"'priority' (LOW, MEDIUM, HIGH, CRITICAL), and 'summary'."
+            f"Respond with JSON format containing keys 'category' (water, roads, electricity, streetlights, sanitation, other), "
+            f"'priority' (high, normal, low), and 'summary'."
         )
 
         payload = {
@@ -46,15 +49,16 @@ class OllamaTriage(BaseTriageProvider):
 
                 content = json.loads(response_text)
 
-                category = CategoryEnum(content.get("category", "OTHER").upper())
-                priority = PriorityEnum(content.get("priority", "MEDIUM").upper())
+                # Values outside the contract enum raise ValueError and fall back to rules.
+                category = CategoryEnum(str(content.get("category", "other")).lower())
+                priority = PriorityEnum(str(content.get("priority", "normal")).lower())
                 summary = content.get("summary", f"Ollama triaged in {latency_ms}ms.")
 
                 return TriageResult(
                     category=category,
                     priority=priority,
                     summary=summary,
-                    triaged_by=f"ollama_llama3 ({latency_ms}ms)",
+                    triaged_by="llm:ollama",
                     confidence_score=0.90,
                 )
 
@@ -62,7 +66,17 @@ class OllamaTriage(BaseTriageProvider):
 
     async def triage(self, title: str, description: str) -> TriageResult:
         try:
-            return await self._call_ollama(title, description)
+            # Same wall-clock budget as the Groq provider (locked retry decision).
+            async with asyncio.timeout(self.BUDGET_SECONDS):
+                return await self._call_ollama(title, description)
         except Exception as exc:
-            logger.warning(f"OllamaTriage falling back to RuleBasedTriage: {str(exc)}")
-            return await self.fallback_provider.triage(title, description)
+            # The contract's single WARNING is emitted by ComplaintService after persist.
+            logger.info(f"OllamaTriage falling back to rules: {type(exc).__name__}: {exc}")
+            fallback_result = await self.fallback_provider.triage(title, description)
+            # Contract §2.3: LLM failures surface as triaged_by = rules:fallback.
+            return fallback_result.model_copy(
+                update={
+                    "triaged_by": "rules:fallback",
+                    "fallback_reason": f"{type(exc).__name__}: {exc}",
+                }
+            )

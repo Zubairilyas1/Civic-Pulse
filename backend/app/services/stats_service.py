@@ -17,7 +17,7 @@ class StatsService:
     def __init__(self, repository: ComplaintRepository | None = None):
         self.repository = repository or ComplaintRepository()
 
-    async def get_stats_with_cache_status(self, session: AsyncSession | None = None) -> tuple[StatsResponse, str]:
+    async def get_stats_with_cache_status(self, session: AsyncSession) -> tuple[StatsResponse, str]:
         """Fetch stats with Redis caching. Returns (StatsResponse, cache_status) where cache_status is 'HIT' or 'MISS'."""
         cached_json = await RedisService.get(self.STATS_CACHE_KEY)
         if cached_json:
@@ -34,7 +34,9 @@ class StatsService:
         await RedisService.delete(self.STATS_CACHE_KEY)
 
     async def get_provider_metadata(self) -> ProvidersMetaResponse:
-        """Return operational status and metadata of all 4 supported AI Triage providers."""
+        """Return provider metadata plus the last 20 triage outcomes (contract §2.2)."""
+        from app.services.triage_log import TriageLog
+
         providers = [
             ProviderInfo(
                 name="simulated",
@@ -61,4 +63,5 @@ class StatsService:
         return ProvidersMetaResponse(
             active_provider=settings.TRIAGE_PROVIDER,
             available_providers=providers,
+            recent_outcomes=TriageLog.recent(),
         )

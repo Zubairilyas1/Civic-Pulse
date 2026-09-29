@@ -18,9 +18,28 @@ spec:
       labels:
         app: backend
     spec:
+      initContainers:
+        # Schema migrations run before any replica serves traffic. Alembic's
+        # upgrade is idempotent, so concurrent replicas converge on the same head.
+        - name: migrate
+          image: ghcr.io/zubairilyas1/civicpulse-backend:v0.0.0
+          imagePullPolicy: IfNotPresent
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: civicpulse-config
+            - secretRef:
+                name: civicpulse-secret
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
       containers:
         - name: backend
-          image: ghcr.io/zubairilyas1/civicpulse-backend:latest
+          image: ghcr.io/zubairilyas1/civicpulse-backend:v0.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

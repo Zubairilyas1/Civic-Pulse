@@ -9,9 +9,9 @@ describe("StatsCards", () => {
         cacheStatus="HIT"
         stats={{
           total_complaints: 12,
-          by_status: { SUBMITTED: 2, TRIAGED: 3, IN_PROGRESS: 1, RESOLVED: 6 },
-          by_category: { WATER: 5, ROADS: 7 },
-          by_priority: { HIGH: 4, MEDIUM: 8 },
+          by_status: { open: 5, in_progress: 1, resolved: 6, rejected: 0 },
+          by_category: { water: 5, roads: 7 },
+          by_priority: { high: 4, normal: 8 },
         }}
       />,
     );

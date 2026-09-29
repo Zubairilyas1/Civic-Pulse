@@ -1,11 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
-
-
-def test_create_complaint_rejects_title_shorter_than_contract_minimum():
+def test_create_complaint_rejects_title_shorter_than_contract_minimum(client):
     response = client.post(
         "/api/complaints",
         json={
@@ -15,8 +8,10 @@ def test_create_complaint_rejects_title_shorter_than_contract_minimum():
         },
     )
 
-    assert response.status_code == 422
-    errors = response.json()["detail"]
-    title_error = next(error for error in errors if error["loc"] == ["body", "title"])
-    assert title_error["type"] == "string_too_short"
-    assert "at least 5 characters" in title_error["msg"]
+    # The contract mandates 400 with a field-level body (not FastAPI's default 422).
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert detail["error"] == "ValidationError"
+    assert detail["message"] == "Request validation failed"
+    title_errors = detail["fields"]["title"]
+    assert any("at least 5 characters" in message for message in title_errors)
