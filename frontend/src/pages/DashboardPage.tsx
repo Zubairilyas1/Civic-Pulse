@@ -7,6 +7,7 @@ import { CATEGORIES, PRIORITIES, STATUSES, type Category, type Complaint, type C
 import { DashboardTable } from "../components/DashboardTable";
 import { Alert, LoadingPanel } from "../components/Feedback";
 
+// Use the same page size for API requests and pagination calculations.
 const PAGE_SIZE = 10;
 
 interface FilterState {
@@ -16,6 +17,7 @@ interface FilterState {
   status: "" | ComplaintStatus;
 }
 
+// Empty filter values represent an unfiltered complaint list.
 const initialFilters: FilterState = { searchQuery: "", category: "", priority: "", status: "" };
 
 export function DashboardPage() {
@@ -29,13 +31,16 @@ export function DashboardPage() {
   const [updatingComplaintId, setUpdatingComplaintId] = useState<string | null>(null);
   const [transitionMessage, setTransitionMessage] = useState<string | null>(null);
 
+  // Reload the queue when a server-side filter or page changes.
   useEffect(() => {
+    // Ignore results from requests superseded by effect cleanup.
     let isCurrent = true;
     setIsLoading(true);
     setError(null);
 
     void civicPulseApi
       .listComplaints({
+        // Omit empty dropdown filters from the API request.
         category: filters.category || undefined,
         priority: filters.priority || undefined,
         status: filters.status || undefined,
@@ -65,11 +70,13 @@ export function DashboardPage() {
     };
   }, [filters.category, filters.priority, filters.status, page]);
 
+  // Restart pagination when any filter changes.
   function setFilter<K extends keyof FilterState>(key: K, value: FilterState[K]): void {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
   }
 
+  // Restore all filters and return to the first page.
   function resetAllFilters(): void {
     setFilters(initialFilters);
     setPage(1);
@@ -80,18 +87,21 @@ export function DashboardPage() {
       return;
     }
 
+    // Derive the next state from the shared status transition rules.
     const nextStatus = getNextStatus(pendingTransition.status);
     if (!nextStatus) {
       setPendingTransition(null);
       return;
     }
 
+    // Track the active update so the UI can disable repeated actions.
     setUpdatingComplaintId(pendingTransition.id);
     setError(null);
     setTransitionMessage(null);
 
     try {
       const updatedComplaint = await civicPulseApi.updateComplaintStatus(pendingTransition.id, { status: nextStatus });
+      // Apply the server-confirmed status to the matching complaint.
       setComplaints((current) => current.map((complaint) => complaint.id === updatedComplaint.id ? updatedComplaint : complaint));
       setTransitionMessage(`Status updated to ${updatedComplaint.status.replace(/_/g, " ").toUpperCase()}.`);
       setPendingTransition(null);
@@ -102,7 +112,7 @@ export function DashboardPage() {
     }
   }
 
-  // Client-side text search filtering
+  // Search only the complaints returned for the current page.
   const filteredComplaints = complaints.filter((item) => {
     if (!filters.searchQuery.trim()) return true;
     const query = filters.searchQuery.toLowerCase();
@@ -114,6 +124,7 @@ export function DashboardPage() {
     );
   });
 
+  // Show the reset action whenever a search or dropdown filter is active.
   const isFiltered = Boolean(filters.searchQuery || filters.category || filters.priority || filters.status);
 
   return (
@@ -138,8 +149,8 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Filter & Free-Text Search Toolbar */}
-      <div className="glass-panel mt-8 rounded-2xl p-5 shadow-xs space-y-4">
+      {/* Filters and search for the complaint queue. */}
+      <div className="glass-panel mt-8 rounded-2xl p-4 shadow-xs space-y-4 sm:p-5">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700">
             <Filter className="h-4 w-4 text-emerald-600" />
@@ -160,7 +171,7 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-4">
-          {/* Free-Text Search Bar */}
+          {/* Search the currently loaded complaints. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-search">
               Keyword Search
@@ -180,7 +191,7 @@ export function DashboardPage() {
             </div>
           </div>
 
-          {/* Compact Category Dropdown */}
+          {/* Filter complaints by service category. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-category">
               Category
@@ -196,7 +207,7 @@ export function DashboardPage() {
             </select>
           </div>
 
-          {/* Compact Priority Dropdown */}
+          {/* Filter complaints by triage priority. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-priority">
               Priority Level
@@ -212,7 +223,7 @@ export function DashboardPage() {
             </select>
           </div>
 
-          {/* Compact Status Dropdown */}
+          {/* Filter complaints by workflow status. */}
           <div className="sm:col-span-1">
             <label className="text-xs font-bold text-slate-700 block mb-1.5" htmlFor="filter-status">
               Complaint Status
@@ -230,7 +241,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Table Area */}
+      {/* Complaint results, request errors, and status feedback. */}
       <div className="mt-6">
         {error && <Alert tone="error">{error}</Alert>}
         {transitionMessage && <div className={error ? "mt-4" : ""}><Alert tone="success">{transitionMessage}</Alert></div>}
@@ -248,7 +259,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Pagination Controls - Hidden when 0 records match */}
+      {/* Show pagination while the current search has visible results. */}
       {filteredComplaints.length > 0 && (
         <nav aria-label="Complaint pages" className="mt-6 flex items-center justify-between gap-4">
           <motion.button
@@ -279,7 +290,7 @@ export function DashboardPage() {
         </nav>
       )}
 
-      {/* Status Transition Confirmation Modal */}
+      {/* Confirm the next allowed complaint status before updating. */}
       <AnimatePresence>
         {pendingTransition && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-xs">
