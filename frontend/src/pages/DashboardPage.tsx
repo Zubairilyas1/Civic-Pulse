@@ -101,6 +101,7 @@ export function DashboardPage() {
 
     try {
       const updatedComplaint = await civicPulseApi.updateComplaintStatus(pendingTransition.id, { status: nextStatus });
+      // Apply the server-confirmed status to the matching complaint.
       setComplaints((current) => current.map((complaint) => complaint.id === updatedComplaint.id ? updatedComplaint : complaint));
       setTransitionMessage(`Status updated to ${updatedComplaint.status.replace(/_/g, " ").toUpperCase()}.`);
       setPendingTransition(null);
