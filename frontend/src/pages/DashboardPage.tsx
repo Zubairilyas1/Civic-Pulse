@@ -149,7 +149,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Filter & Free-Text Search Toolbar */}
+      {/* Filters and search for the complaint queue. */}
       <div className="glass-panel mt-8 rounded-2xl p-4 shadow-xs space-y-4 sm:p-5">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700">
