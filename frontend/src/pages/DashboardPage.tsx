@@ -33,6 +33,7 @@ export function DashboardPage() {
 
   // Reload the queue when a server-side filter or page changes.
   useEffect(() => {
+    // Ignore results from requests superseded by effect cleanup.
     let isCurrent = true;
     setIsLoading(true);
     setError(null);
